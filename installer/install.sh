@@ -1,0 +1,152 @@
+#!/bin/sh
+
+: '
++--------------------------------------------------------+
+| DataVaccinator Vault Provider System
+| Copyright (C) DataVaccinator
+| https://www.datavaccinator.com/
++--------------------------------------------------------+
+| Filename: install.sh
+| Author: Data Vaccinator Development Team
++--------------------------------------------------------+
+| This program is released as free software under the
+| Affero GPL license. You can redistribute it and/or
+| modify it under the terms of this license which you
+| can read by viewing the included agpl.txt or online
+| at www.gnu.org/licenses/agpl.html. Removal of this
+| copyright header is strictly prohibited without
+| written permission from the original author(s).
++--------------------------------------------------------+
+'
+
+# This script controls the pre-configuration for the
+# dv-vault executable, it's autostart with systemd and
+# the initial creation of the database, db-user and tables.
+
+echo " __                                 "
+echo "|  \\ _ |_ _ \\  /_  _ _. _  _ |_ _  _ "
+echo "|__/(_|| (_| \\/(_|(_(_|| )(_|| (_)|  "
+echo "                            Installer"
+echo " "
+
+if ! [ $(id -u) = 0 ]; then
+   echo "Please run me as root or use sudo!"
+   exit 1
+fi
+
+if ! [ -x "$(command -v cockroach)" ]; then
+    echo "'cockroach' commandline tool could not be found. Make sure CockroachDB is installed!"
+    exit 1
+fi
+
+echo -n "Where shall I install dv-vault executable (/opt/vaccinator): "
+read dvpath
+if [ -z "$dvpath" ]
+then
+    dvpath="/opt/vaccinator"
+fi
+echo $dvpath
+
+echo -n "What is the database user name to use (dv): "
+read dvuser
+if [ -z "$dvuser" ]
+then
+    dvuser="dv"
+fi
+echo $dvuser
+
+echo -n "What port shall dv-vault listen to (443): "
+read dvport
+if [ -z "$dvport" ]
+then
+    dvport="443"
+fi
+echo $dvport
+
+echo "---------------------------"
+echo -n "Prepare SQL database update script... "
+if sed -e"s|<USER>|$dvuser|g" "./database.sql" > "./database.tmp"
+then
+    echo "OK"
+    echo "Execute SQL database update script... "
+    if cockroach sql --insecure < "./database.tmp"
+    then
+        echo "SQL script OK"
+    else
+        echo "SQL script import FAILED (maybe DB already there)"
+    fi
+    rm "./database.tmp"
+else
+    echo "FAILED TO GENERATE database.tmp"
+fi
+
+echo "---------------------------"
+
+echo -n "Create a system user and group 'vaccinator' for running the dv-vault... "
+if ! adduser --system --no-create-home --group vaccinator
+then
+    echo "FAILED"
+fi
+
+echo -n "Create folder $dvpath... "
+if mkdir -p $dvpath
+then
+    echo "OK"
+    chown vaccinator:vaccinator $dvpath
+else
+    echo "FAILED"
+fi
+
+echo -n "Copy dv-vault executable to $dvpath... "
+# -> owner 'vaccinator', group 'vaccinator', make executable
+if install -o vaccinator -g vaccinator -m +x "./dv-vault" "$dvpath/"
+then
+    echo "OK"
+else
+    echo "FAILED"
+fi
+
+echo -n "Copy dv-vault configuration file (config.json) to $dvpath... "
+
+if [ ! -f "$dvpath/config.json" ]; 
+then
+
+    configString="user=$dvuser host=localhost port=26257 dbname=vaccinator"
+    if sed -e"s|<PORT>|$dvport|g" -e"s|<CONN>|$configString|g" "./config.json" > "$dvpath/config.json"
+    then
+        echo "OK"
+        chown vaccinator:vaccinator "$dvpath/config.json"
+    else
+        echo "FAILED"
+    fi
+else
+    echo "ALREADY THERE"
+fi
+
+echo "---------------------------"
+
+echo -n "Do you want me to create/update a systemd autostart entry for dv-vault (Y/n): "
+read wantAutostart
+if [ -z "$wantAutostart" -o "$wantAutostart" = "y" -o "$wantAutostart" = "Y" ]
+then
+    echo -n "Create a systemd file in /etc/systemd/system folder... "
+    if sed -e"s|<PATH>|$dvpath|g" -e"s|<USER>|vaccinator|g" "./vaccinator.service" > "/etc/systemd/system/vaccinator.service"
+    then
+        echo "OK"
+        echo -n "Activate vaccinator.service... "
+        if systemctl enable vaccinator.service
+        then
+            echo "OK"
+            systemctl daemon-reexec
+            systemctl start vaccinator
+            echo "Hint: Validate service logs using journalctl -xe"
+        else
+            echo "FAILED"
+        fi
+    else
+        echo "FAILED"
+    fi
+    echo "---------------------------"
+fi
+
+echo "Finished"

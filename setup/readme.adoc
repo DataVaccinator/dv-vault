@@ -1,0 +1,25 @@
+= Setups readme
+:author: DataVaccinator Team
+:email: info@datavaccinator.com
+
+This folder contains compiled setups, ready for distribution on Linux machines (Ubuntu, RedHAT, Suse).
+
+== Creation of setups
+
+The setups are created by calling
+----
+make VERSION=1.0.0
+----
+from the main directory.
+
+== Cleanup
+----
+make clean
+----
+
+== Run setups
+
+Run the downloaded setups like this
+----
+sudo sh dv-vault-1.0.0_x86_64_setup.sh
+----

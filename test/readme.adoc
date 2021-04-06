@@ -1,0 +1,57 @@
+= Tests readme
+:author: DataVaccinator Team
+:email: info@datavaccinator.com
+
+This folder contains a php script to verify the complete DataVaccinaor Vault API functionality.
+
+== Run a test example
+The test script needs the url (and port) of the service to test. Call it like this:
+
+----
+php vaccinator_test.php http://127.0.0.1:8080
+----
+
+The above will connect to localhost on port 8080.
+
+----
+php vaccinator_test.php https://service.mydomain.com
+----
+
+The above will connect using https connection to service.mydomain.com (port 443 by default).
+
+All tests have to return like this (positive example result):
+----
+Get version and check availability:
+- pass
+
+NOTE: Server supports 'search' module. We will test this, too.
+
+Testing invalid requests (wrong data, missing data etc):
+- pass
+- pass
+- pass
+- pass
+- pass
+
+Testing to add data:
+NOTE: New user VID: 42b6d456d95f22196956cafeb6dc5b6f
+- pass
+
+Tests updating data:
+- pass
+- pass
+- pass
+
+Tests retrieving data:
+- pass
+- pass
+
+Testing 'search' plugin function:
+- pass
+- pass
+
+Cleanup vid's created:
+Removing vid [42b6d456d95f22196956cafeb6dc5b6f]... OK
+
+Done
+----

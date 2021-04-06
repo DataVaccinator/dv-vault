@@ -1,0 +1,309 @@
+= DataVaccinator Vault Protocol
+:author: DataVaccinator Team
+:email: info@datavaccinator.com
+:toc:
+
+== Client Protocol
+
+This chapter is describing the protocol for using the DataVaccinator Vault pseudonymisation service. This is the internal communication for the DataVaccinator Vault service and not to become implemented by customers developers.
+
+The client protocol is currently implemented in JavaScipt and offers access to all pseudonymisation functions and management functions of DataVaccinator Vault. *It is not the endpoint presented to the developers.* Instead, this is communication between the JavaScript class and the DataVaccinator Vault itself.
+
+The endpoint interface for developers is described in the documentation for the respective endpoint implementation (eg JavaScript class).
+
+== Implementation details
+
+The protocol is REST based and works by sending information using POST requests. 
+
+The functionality at the service provider is established by some sort of intermediate handling between client and identity management (proxy).
+The described client protocol is used between the client implementation and the DataVaccinator Vault. The service provider always forwards all the requests to the DataVaccinator Vault and only adds his access information fields to the request (_sid_ and _spwd_). The results are also forwarded back to the calling client then.
+
+A few functions like *add* also return data that is interesting for the service provider. He can use this to update his own database.
+
+The JSON encoded structure, containing the function name and all needed parameters, is typically sent in a POST field named _json_.
+A typical call consists of some operation code (_op_) and some field containing the encrypted data for the DataVaccinator Vault (_data_).
+The optional _uid_ field is for API users to identify calls to some specific user or assigning return values to internal identifiers. It can be unset (empty) or contain some value. It is not used for DataVaccinator identity management.
+
+All calls will return a JSON encoded string, containing the result of the operation and additional information.
+
+There is always a _status_ field returned. If it is not _OK_, something went wrong. In this case, the status is either _INVALID_ or _ERROR_.
+An additional _code_ field contains the error number and the _desc_ field contains additional information about the error (only if _status_ is not _OK_).
+
+The _data_ field contains encrypted payload for the identity management. It is usually named Vaccination Data. It is encrypted due to contained receipt.
+A data field is always encoded like this:
+
+ receipt:cs:iv:payload
+
+* The _receipt_ defines the algorithm used for encryption.
+* The _cs_ value is the checksum of the used app-id key (last byte in hex, see app-id description).
+* The _iv_ is the start vector/nonce for encryption in hex encoding.
+* The _payload_ is the hex or base64 encoded JSON string with encrypted Vaccination Data.
+
+It typically looks like in this example:
+
+ aes-256-cbc:f7:29a1c8b68d8a:Z2Zkc2dmZG1rZyBmZ(...)XI0N2Z2IDZyNHkzMmY0Mw==
+
+This encryption is done automatically by the client API and happens transparently for the end users and service provider developers.
+
+NOTE: By this encryption, using the app-id as key, the service provider and the DataVaccinator Vault both do not have access to the content (for example patient data). The checksum as part of the receipt allows later verification, if the dataset was encrypted with one or maybe a newer app-id.
+This is useful if, for example, the *changeAppId()* function failed during processing (please refer to *changeAppId()* function description in JavaScript class documentation).
+
+NOTE: The above chosen AES cipher is just the reference implementation. You can also use others (like Twofish). The only thing to respect is the encoding using hex for the _cs_ and the _iv/nonce_.
+
+== Transport encryption
+
+Of course, all API REST calls are using standard SSL connections (https).
+
+The _data_ field is encrypted using the SHA256 from the end users app-id as password. We will start implementing AES encryption with CBC mode and individual IV. See above chapter about implementation details.
+
+== Error codes
+
+In case of an error, the _status_ value is not OK, instead it is either INVALID or ERROR. INVALID means that some data you provided triggered the error and ERROR is some DataVaccinator related internal error. If INVALID, you need to check your input.
+
+The system then returns two additional fields:
+[cols="1,4,2"]
+|=======
+|code	|desc	|status
+
+|1	|Missing Parameters.	|INVALID
+|2	|Wrong Protocol.	|INVALID
+|3	|Your software seems outdated.	|INVALID
+|4	|The account was locked due to possible misuse.	|INVALID
+|5	|Invalid credentials (check sid and spwd).	|INVALID
+|6	|Invalid encoding (check data values and JSON integrity).	|INVALID
+|7	|Not found (vid is not found in the system).	|INVALID
+|8	|Invalid partner (you are not allowed to access foreign data).	|INVALID
+|9	|Invalid parameter size (some parameter exceeds limits).	|INVALID
+|99	|Some internal service error happened. Please contact support.	|ERROR
+|=======
+
+== PING function
+
+You may want to verify if DataVaccinator Vault is alive and working by simply calling it's *ping* function like this:
+
+https://domain/ping or http://domain:8080/ping
+
+If it does not return with "OK", something is wrong (eg database backend not available or service not running at all).
+
+TIP: This *ping* service does not consume many ressources, so you can call this every minute to verify the status of your DataVaccinator Vault instances. We suggest to use a networking timeout of maximum two seconds for this.
+
+== API functions
+
+=== Add new dataset
+
+This call is adding a new dataset to the system (eg PID).
+[cols="1,4"]
+|=======
+|Field	|Description
+
+|version	|2 (current protocol version)
+|op	|add
+|data	|Encrypted payload containing all the Vaccination Data to be stored (string blob, use base64 encoding for binary data). Please follow the encoding scheme described in "Implementation Details".
+|uid	|User identifier provided by the API user.
+|words	|Array of SearchHashes to add for search function (optional).
+|=======
+
+[cols="1,4"]
+|=======
+|Field	|Description
+
+|status	|Either OK, INVALID or ERROR. See generic description for details.
+|uid	|User identifier provided by the API user during call (only if it was provided).
+|vid	|New Vaccination ID for the newly generated person (also VID). This may be stored by the service provider and get assigned to the calling client (identified by uid).
+|=======
+
+IMPORTANT: If you forward some positive result to the client, please take the returned _vid_ and add this to your service provider database while assigning to the user. By this, you are able to send your client software a complete and up to date list of all VIDs at any time.
+
+=== Update dataset
+
+This call is updating an existing entry.
+
+[cols="1,4"]
+|=======
+|Field	|Description
+
+|version	|2 (current protocol version)
+|op	|update
+|data	|Encrypted payload containing all the Vaccination Data to get updated (string blob, use b64 encoding for binary data).
+|vid	|Vaccination ID to update.
+|uid	|User identifier provided by the API user.
+|words	|Array of SearchHashes to add for search function (optional).
+|=======
+
+Result:
+[cols="1,4"]
+|=======
+|Field	|Description
+
+|status	|Either OK, INVALID or ERROR. See generic description for details.
+|uid	|User identifier provided by the API user during call (only if it was provided).
+|=======
+
+IMPORTANT: Updating payload data is critical to the local caches of the JS class. If multiple systems accessing the data, the cache of the other systems is outdated after some update. Only the system which did the changes is up to date. +
+ +
+Therefore, this has to be handled special: Please create a unique code (eg time stamp or random number) in case you forward some *update* request to the DataVaccinator Vault. This code has to be sent to your client application as soon as possible (maybe as part of your protocol).
+There, please call the *wipeCache()* function with this code every time.
+This will trigger the local cache to refresh in case something has changed.
+Please refer to the *wipeCache()* function description in JavaScript class documentation.
+
+=== Retrieve dataset
+
+This call is retrieving the data of one or more existing entries.
+[cols="1,4"]
+|=======
+|Field	|Description
+
+|version	|2 (current protocol version)
+|op	|get
+|vid	|Vaccination ID to retrieve data from.
+
+Multiple VIDs may become requested by concatenating them using blank as divider character. The maximum allowed VIDs is 500 per request.
+
+|uid	|User identifier provided by the API user.
+|=======
+
+Result:
+[cols="1,4"]
+|=======
+|Field	|Description
+
+|status	|Either OK, INVALID or ERROR. See generic description for details.
+|uid	|User identifier provided by the API user during call (only if it was provided).
+|data	|This contains the Vaccination Data payload(s). Payload always comes as a object array where the VID is the key. It has one entry in case only one VID was requested and multiple entries in case of multiple results. Every given VID creates a return value, even if it was not found or suspicious. Note: The order is not guaranteed to be the same as provided in the request!
+|=======
+
+The returned result always confirms to this JSON schema, written as a complete example answer:
+
+[source,json]
+----
+ {
+   "status": "OK",
+   "version": "0.0.0.0",
+   "uid": 12345,
+   "data": {
+     "f315db7b01721026308a5346ce3cb513": {
+       "status": "OK",
+       "data": "aes-256-cbc:7f:29a1c8b68d8a:btewwyzox3i3fe4cg6a1qzi8pqoqa55orzf4bcxtjfcf5chep998sj6"
+     },
+     "2ff18992cfc290d3d648aea5bdea38b1": {
+       "status": "NOTFOUND",
+       "data": false
+     }
+   }
+ }
+----
+
+The above example showing the result of a request with two VIDs.
+The first was a valid request, the second was some unknown entry.
+
+=== Delete dataset
+
+This call is deleting an existing entry.
+[cols="1,4"]
+|=======
+|Field	|Description
+
+|version	|2 (current protocol version)
+|op	|delete
+|vid	|Vaccination ID to delete from DataVaccinator Vault.
+
+Multiple VIDs may become requested by concatenating them using blank as divider character. The maximum allowed VIDs is 500 per request.
+
+|uid	|User identifier provided by the API user.
+|=======
+
+Result:
+[cols="1,4"]
+|=======
+|Field	|Description
+
+|status	|Either OK, INVALID or ERROR. See generic description for details.
+|uid	|User identifier provided by the API user during call (only if it was provided).
+|=======
+
+=== Check connection
+
+This is just a simple "ping" sort of call to verify if the service is available. It does nothing.
+It is just answering with status "OK" and giving generic information about the platform. This is also not verifying the validity of the request using `sid` and `spwd`.
+[cols="1,4"]
+|=======
+|Field	|Description
+
+|version	|2 (current protocol version)
+|op	|check
+|uid	|User identifier provided by the API user.
+|=======
+
+Result:
+[cols="1,4"]
+|=======
+|Field	|Description
+
+|status	|OK
+|uid	|User identifier provided by the API user during call (only if it was provided).
+|version	|Server version.
+|time	|Current date and time on the server (YYYY-MM-DD HH:MM:SS).
+|plugins	|An array of objects mentioning available plugins. Each object contains at least a _name_, _vendor_ and _license_ field.
+|=======
+
+=== Search
+
+The search function is only available if the DataVaccinator Vault is running the *search* plugin.
+You can verify this using the "check" function.
+[cols="1,4"]
+|=======
+|Field	|Description
+
+|version	|2 (current protocol version)
+|op	|search
+|words	|One or more SearchHashes to search for. Multiple SearchHashes have to be divided by space.
+|uid	|User identifier provided by the API user.
+|=======
+
+Result:
+[cols="1,4"]
+|=======
+|Field	|Description
+
+|status	|Either OK, INVALID or ERROR. See generic description for details.
+|uid	|User identifier provided by the API user during call (only if it was provided).
+|vids	|Array of VIDs (Vaccination IDs) that matched your search. Empty array if there are no matches.
+|=======
+
+= Implementation of protocol forward
+
+This chapter explains, what a service provider has to do to successfully handle and forward REST protocol requests.
+
+== Forward requests by adding service provider credentials
+
+In general, all requests have to become forwarded to the DataVaccinator Vault URL. The JSON encoded in _json_ data value must get enhanced by two additional values:
+[cols="1,4"]
+|=======
+|Field	|Description
+
+|sid	|The service provider ID. This is provided to the service provider by the vaccinator service staff.
+|spwd	|The service provider password. This is provided to the service provider by the vaccinator service staff.
+|=======
+
+Upon the JSON request was updated by sid and spwd, the request is forwarded to the DataVaccinator Vault URL (provided to you by the DataVaccinator staff). The returned result is sent as an answer to the calling end user client (eg web browser API).
+
+== Observe and enrich function calls
+
+In addition, the service provider has to observe the functions to provide additional functionality required.
+
+=== update call
+
+The update call will out date all other participants local caches. Therefore, they need to know about this. The only party able to tell them is you.
+
+This is done by acting in case of a positive "update" call. In case the DataVaccinator Vault announces success, please generate a time stamp (or random token) and provide it to all affected clients. By knowing the vid from the request, you should be able to know the affected persons (logins).
+You send them this time stamp with their next request and they will have to call the *wipeCache()* function with this as parameter. 
+
+If the API recognises this time stamp/token as already known, nothing will happen. If it does not know this value yet, it will wipe it's cache and regenerate it on demand later.
+
+=== ALL user requests (get, update and delete)
+
+Here you might want to verify it the logged in user is allowed to handle data about this VID. This would be some important security layer to prevent manipulations in local client to retrieve or manipulate data of VIDs the user is not allowed to.
+
+Here, please forward the request only if the user is allowed to. Please follow the protocol description above and, if not allowed, send some status "INVALID" and code 7 (vid not found).
+
+Please see examples/ folder in this repository to find a PHP example about forwarding DataVaccinator calls (eg from JavaScript class).

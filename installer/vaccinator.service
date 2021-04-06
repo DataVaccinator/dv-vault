@@ -1,0 +1,18 @@
+[Unit]
+Description=DataVaccinator server autostart
+Requires=network.target
+
+[Service]
+Type=simple
+WorkingDirectory=<PATH>
+ExecStart=<PATH>/dv-vault
+Restart=always
+RestartSec=10
+RestartPreventExitStatus=0
+StandardOutput=syslog
+StandardError=syslog
+SyslogIdentifier=vaccinator
+User=<USER>
+
+[Install]
+WantedBy=default.target

@@ -1,0 +1,4 @@
+*.code-workspace
+/.vscode
+/certs
+__debug_bin

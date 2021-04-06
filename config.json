@@ -1,0 +1,7 @@
+{ 
+    "connectionString": "user=dv host=localhost port=26257 dbname=vaccinator", 
+    "maxConnections": 0,
+    "listenPort": 8080,
+    "useLetsEncrypt": 0,
+    "debugMode": 0
+}
