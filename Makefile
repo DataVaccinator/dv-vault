@@ -8,8 +8,8 @@ all: setup
 arch = $(shell uname -m)
 
 package: clean
-	go build -ldflags "-X main.SERVER_VERSION=$(VERSION)"
-	mv dv-vault ./installer/dv-vault
+	go build -ldflags "-X main.SERVER_VERSION=$(VERSION)" -o vaccinator
+	mv vaccinator ./installer/vaccinator
 	chmod +x ./installer/install.sh
 
 setup: package
@@ -18,4 +18,4 @@ setup: package
 
 clean:
 	rm -f ./setup/*.sh
-	rm -f ./installer/dv-vault
+	rm -f ./installer/vaccinator

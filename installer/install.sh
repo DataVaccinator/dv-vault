@@ -39,7 +39,7 @@ if ! [ -x "$(command -v cockroach)" ]; then
     exit 1
 fi
 
-echo -n "Where shall I install dv-vault executable (/opt/vaccinator): "
+echo -n "Where shall I install DataVaccinator Vault executable (/opt/vaccinator): "
 read dvpath
 if [ -z "$dvpath" ]
 then
@@ -55,7 +55,7 @@ then
 fi
 echo $dvuser
 
-echo -n "What port shall dv-vault listen to (443): "
+echo -n "What port shall DataVaccinator Vault listen to (443): "
 read dvport
 if [ -z "$dvport" ]
 then
@@ -82,7 +82,7 @@ fi
 
 echo "---------------------------"
 
-echo -n "Create a system user and group 'vaccinator' for running the dv-vault... "
+echo -n "Create a system user and group 'vaccinator' for running the vaccinator... "
 if ! adduser --system --no-create-home --group vaccinator
 then
     echo "FAILED"
@@ -97,16 +97,16 @@ else
     echo "FAILED"
 fi
 
-echo -n "Copy dv-vault executable to $dvpath... "
+echo -n "Copy vaccinator executable to $dvpath... "
 # -> owner 'vaccinator', group 'vaccinator', make executable
-if install -o vaccinator -g vaccinator -m +x "./dv-vault" "$dvpath/"
+if install -o vaccinator -g vaccinator -m +x "./vaccinator" "$dvpath/"
 then
     echo "OK"
 else
     echo "FAILED"
 fi
 
-echo -n "Copy dv-vault configuration file (config.json) to $dvpath... "
+echo -n "Copy vaccinator configuration file (config.json) to $dvpath... "
 
 if [ ! -f "$dvpath/config.json" ]; 
 then
@@ -125,7 +125,7 @@ fi
 
 echo "---------------------------"
 
-echo -n "Do you want me to create/update a systemd autostart entry for dv-vault (Y/n): "
+echo -n "Do you want me to create/update a systemd autostart entry for vaccinator (Y/n): "
 read wantAutostart
 if [ -z "$wantAutostart" -o "$wantAutostart" = "y" -o "$wantAutostart" = "Y" ]
 then

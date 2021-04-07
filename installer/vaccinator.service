@@ -5,7 +5,7 @@ Requires=network.target
 [Service]
 Type=simple
 WorkingDirectory=<PATH>
-ExecStart=<PATH>/dv-vault
+ExecStart=<PATH>/vaccinator
 Restart=always
 RestartSec=10
 RestartPreventExitStatus=0
