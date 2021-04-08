@@ -1,0 +1,5 @@
+= Installer readme
+:author: DataVaccinator Team
+:email: info@datavaccinator.com
+
+This folder contains the default files, templates and installation script needed for compiling a DataVaccinator Vault setup.

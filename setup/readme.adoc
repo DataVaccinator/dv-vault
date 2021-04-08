@@ -2,7 +2,7 @@
 :author: DataVaccinator Team
 :email: info@datavaccinator.com
 
-This folder contains compiled setups, ready for distribution on Linux machines (Ubuntu, RedHAT, Suse).
+This folder contains compiled setups, ready for distribution on Linux machines (Debian, Ubuntu, RedHAT, CentOS, Suse, Arch).
 
 == Creation of setups
 
