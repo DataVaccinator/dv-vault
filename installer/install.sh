@@ -20,7 +20,7 @@
 '
 
 # This script controls the pre-configuration for the
-# dv-vault executable, it's autostart with systemd and
+# vaccinator executable, it's autostart with systemd and
 # the initial creation of the database, db-user and tables.
 
 echo " __                                 "
@@ -36,6 +36,13 @@ fi
 
 if ! [ -x "$(command -v cockroach)" ]; then
     echo "'cockroach' commandline tool could not be found. Make sure CockroachDB is installed!"
+    exit 1
+fi
+
+DIST=$( cat /etc/*-release | tr [:upper:] [:lower:] | grep -Poi '(debian|ubuntu|red hat|centos|suse|arch)' | head -n 1 )
+if [ -z "$DIST" ]
+then
+    echo "This distribution is not supported by this script. Sorry."
     exit 1
 fi
 
@@ -63,7 +70,7 @@ then
 fi
 echo $dvport
 
-echo "---------------------------"
+echo "--------------------------- database creation"
 echo -n "Prepare SQL database update script... "
 if sed -e"s|<USER>|$dvuser|g" "./database.sql" > "./database.tmp"
 then
@@ -80,13 +87,32 @@ else
     echo "FAILED TO GENERATE database.tmp"
 fi
 
-echo "---------------------------"
+echo "--------------------------- user creation"
 
-echo -n "Create a system user and group 'vaccinator' for running the vaccinator... "
-if ! adduser --system --no-create-home --group vaccinator
+echo -n "Create a system user and group 'vaccinator' for running the vaccinator... ($DIST) "
+
+if [ "$DIST" = "ubuntu" -o "$DIST" = "debian" ]
 then
-    echo "FAILED"
+    if ! adduser --system --no-create-home --group vaccinator
+    then
+        echo "FAILED"
+    fi
+elif [ "$DIST" = "centos" -o "$DIST" = "red hat" ]
+then
+    if ! adduser --system --no-create-home --gid vaccinator
+    then
+        echo "FAILED"
+    fi
+elif [ "$DIST" = "suse" -o "$DIST" = "arch" ]
+then
+    if ! useradd -r -U -s /usr/bin/nologin vaccinator
+    then
+        echo "FAILED"
+    fi
 fi
+
+echo " "
+echo "--------------------------- copy files"
 
 echo -n "Create folder $dvpath... "
 if mkdir -p $dvpath
@@ -104,6 +130,8 @@ then
     echo "OK"
 else
     echo "FAILED"
+    echo "Stop because the installation source is missing the 'vaccinator' executable!"
+    exit 1
 fi
 
 echo -n "Copy vaccinator configuration file (config.json) to $dvpath... "
@@ -123,7 +151,7 @@ else
     echo "ALREADY THERE"
 fi
 
-echo "---------------------------"
+echo "--------------------------- systemd integration"
 
 echo -n "Do you want me to create/update a systemd autostart entry for vaccinator (Y/n): "
 read wantAutostart
@@ -138,8 +166,6 @@ then
         then
             echo "OK"
             systemctl daemon-reexec
-            systemctl start vaccinator
-            echo "Hint: Validate service logs using journalctl -xe"
         else
             echo "FAILED"
         fi
@@ -148,5 +174,10 @@ then
     fi
     echo "---------------------------"
 fi
-
+echo " "
+echo "Hints:"
+echo "- Configure DataVaccinator in '$dvpath/config.json'"
+echo "- Run daemon using 'systemctl start vaccinator'"
+echo "- Validate service logs using 'journalctl -xe'"
+echo " "
 echo "Finished"
