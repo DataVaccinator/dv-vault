@@ -170,14 +170,21 @@ func checkCredentials(c echo.Context, clientRequest map[string]interface{}) erro
 	sid := GetInt(clientRequest["sid"], 0)
 	spwd := GetString(clientRequest["spwd"], "")
 	if spwd == "" {
-		return errors.New("Invalid credentials") // wrong password
+		return errors.New("Invalid credentials")
 	}
 
+	clientIP := c.RealIP()
 	var pwd string = ""
-	DB.QueryRow("SELECT password FROM dv.provider WHERE providerid=$1", sid).Scan(&pwd)
+	var allowedIP string = ""
+	sql := "SELECT password,ip FROM dv.provider WHERE providerid=$1"
+	DB.QueryRow(sql, sid).Scan(&pwd, &allowedIP)
+	if !strings.Contains(allowedIP, clientIP) {
+		go DoLog(LOG_TYPE_ERROR, sid, "Not allowed IP client address")
+		return errors.New("Not allowed IP client address")
+	}
 	if pwd != spwd {
 		go DoLog(LOG_TYPE_ERROR, sid, "Wrong sid/spwd")
-		return errors.New("Invalid credentials") // wrong password
+		return errors.New("Invalid credentials")
 	}
 
 	return nil // success
