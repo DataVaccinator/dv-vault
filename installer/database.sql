@@ -40,5 +40,5 @@ CREATE TABLE dv.audit (
   PRIMARY KEY (ID)
 );
 
-INSERT INTO dv.provider (providerid, name, password, creationdate) 
-  VALUES(1, 'test', 'vaccinator', now());
+INSERT INTO dv.provider (providerid, name, password, ip, creationdate) 
+  VALUES(1, 'test', 'vaccinator', '127.0.0.1', now());
