@@ -1,0 +1,56 @@
+= vaccinator configuration options
+:author: DataVaccinator Team
+:email: info@datavaccinator.com
+
+== config.json
+
+The *config.json* has be located at the same place the vaccinator executable is located. The default content looks like this:
+[source,json]
+----
+{ 
+    "connectionString": "connectionString", 
+    "maxConnections": 0,
+    "listenIP": "",
+    "listenPort": 443,
+    "useLetsEncrypt": 0,
+    "debugMode": 0,
+    "IPExtractor": ""
+}
+----
+
+This are the available options and their meanings:
+
+[cols="1,3"]
+|=====
+|Parameter | Description
+
+|connectionString
+|This is the database connection string for the CockroachDB.
+
+Reference: https://www.postgresql.org/docs/11/libpq-connect.html#LIBPQ-CONNSTRING
+
+|maxConnections
+|This value determines how many database connections the DataVaccinator keeps in his connection pool. If you specify *0* (which means *auto*), it will multiply the number of CPU cores (incl. hyperthreading) with 3.
+
+Reference: https://www.cockroachlabs.com/docs/v21.1/connection-pooling.html#sizing-connection-pools
+
+|listenIP
+|The IPv4 address to listen to. If you keep it empty, it listens on all available interfaces. Default is empty string.
+
+|listenPort
+|Set the port to listen to. This value must be set. For SSL connections (https), set to 443.
+
+|useLetsEncrypt
+|Set to *1* if you like to let DataVaccinator use Let's Encrypt certificate automatically. Default is *0*.
+
+|debugMode
+|Set to *1* if you like to get additional debug information to StdOut. Default is *0*.
+
+|IPExtractor
+a|If not set (empty string), the DataVaccinator will determine source IP addresses by using the network layer.
+
+In some cases, behind loadbalancers or proxy servers, this will return the same IP for all requests. Here you can advise to use other headers. The following values are available:
+
+. *XFF* -> Using the X-Forwared-For header
+. *REALIP* -> Using the X-Real-IP header
+|=====

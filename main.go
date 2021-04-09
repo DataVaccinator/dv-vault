@@ -23,8 +23,10 @@ import (
 	"net/http"
 	"os"
 	"strconv"
+	"strings"
 
 	"github.com/labstack/echo/v4"
+	"github.com/labstack/echo/v4/middleware"
 	"golang.org/x/crypto/acme/autocert"
 )
 
@@ -48,9 +50,25 @@ func main() {
 	DoLog(LOG_TYPE_ERROR, 0, "Started service")
 
 	e := echo.New()
+
 	if cfg.DebugMode > 0 {
 		e.Debug = true
+		e.Use(middleware.LoggerWithConfig(middleware.LoggerConfig{
+			Format: "${remote_ip} method=${method}, uri=${uri}, status=${status}\n",
+		}))
 	}
+
+	switch strings.ToUpper(cfg.IPExtractor) {
+	case "XFF":
+		e.IPExtractor = echo.ExtractIPFromXFFHeader()
+		fmt.Println("Determine IP by using X-Forwared-For header")
+	case "REALIP":
+		e.IPExtractor = echo.ExtractIPFromRealIPHeader()
+		fmt.Println("Determine IP by using X-Real-IP header")
+	default:
+		e.IPExtractor = echo.ExtractIPDirect()
+	}
+
 	if cfg.LetsEncrypt > 0 {
 		// Prepare Let's Encrypt usage (echo framework)
 		if _, err := os.Stat("certs/"); os.IsNotExist(err) {

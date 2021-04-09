@@ -13,6 +13,7 @@ type Configuration struct {
 	Port             int    `json:"listenPort"`
 	LetsEncrypt      int    `json:"useLetsEncrypt"`
 	DebugMode        int    `json:"debugMode"`
+	IPExtractor      string `json:"IPExtractor"`
 }
 
 var cfg Configuration
