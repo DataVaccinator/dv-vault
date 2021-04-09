@@ -9,6 +9,7 @@ import (
 type Configuration struct {
 	ConnectionString string `json:"connectionString"`
 	MaxConnections   int    `json:"maxConnections"`
+	IP               string `json:"listenIP"`
 	Port             int    `json:"listenPort"`
 	LetsEncrypt      int    `json:"useLetsEncrypt"`
 	DebugMode        int    `json:"debugMode"`

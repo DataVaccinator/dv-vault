@@ -85,9 +85,9 @@ func main() {
 	e.POST("/index.php", protocolHandler) // bind protocol handler (legacy)
 
 	if cfg.LetsEncrypt > 0 {
-		e.Logger.Fatal(e.StartAutoTLS(":" + strconv.Itoa(cfg.Port)))
+		e.Logger.Fatal(e.StartAutoTLS(cfg.IP + ":" + strconv.Itoa(cfg.Port)))
 	} else {
-		e.Logger.Fatal(e.Start(":" + strconv.Itoa(cfg.Port)))
+		e.Logger.Fatal(e.Start(cfg.IP + ":" + strconv.Itoa(cfg.Port)))
 	}
 }
 
