@@ -26,14 +26,15 @@ $myConnectionString = "host=localhost;dbname=vaccinator";
 
 $cdbUser = "dv";
 $cdbPass = "pwd";
-$cdbConnectionString = "user='$cdbUser' password='$cdbPass' host=localhost port=26257 dbname=vaccinator";
+$cdbConnectionString = "host=localhost port=26257 dbname=vaccinator";
 
+$chunkSize = 500; // how many entries per transaction chunk
 // --------- END CONFIGURATION ---------
 
 print("Connect CockroachDB... ");
 try {
     $cdb = new PDO("pgsql:$cdbConnectionString",
-        $cdbUsername, null, array(
+        $cdbUser, $cdbPass, array(
         PDO::ATTR_ERRMODE          => PDO::ERRMODE_EXCEPTION,
         PDO::ATTR_EMULATE_PREPARES => true,
         PDO::ATTR_PERSISTENT => true
@@ -59,10 +60,7 @@ print("OK\n");
 
 print("\nMigrate provider entries... \n");
 
-// prepare CockroachDB for insert
-$cdb->beginTransaction();
-
-// select and insert in 100 bulk
+// select and insert
 $cnt = 0;
 $result = $mdb->query("SELECT * FROM provider");
 print("- Run provider migration...\n");
@@ -90,9 +88,6 @@ while ($data = $result->fetch(PDO::FETCH_ASSOC)) {
 }
 print("- Done for $cnt entries\n");
 
-// commit CockroachDB inserts
-$cdb->commit();
-
 print("OK\n");
 
 // -------------- DATA --------------
@@ -108,13 +103,14 @@ if ($r === false) {
 }
 
 do {
-    // prepare CockroachDB for insert
+    // prepare database transactions for insert
     $cdb->beginTransaction();
+    $mdb->beginTransaction();
 
-    // select and insert in 100 bulk
+    // select and insert in bulk
     $cnt = 0;
-    $result = $mdb->query("SELECT * FROM data WHERE mig=0 LIMIT 100");
-    print("- Chunk with 100 entries...\n");
+    $result = $mdb->query("SELECT * FROM data WHERE mig=0 LIMIT ".$chunkSize);
+    print("- Chunk with $chunkSize entries...\n");
     while ($data = $result->fetch(PDO::FETCH_ASSOC)) {
         try {
             $SQL = "INSERT INTO data (vid, payload, providerid, creationdate) 
@@ -135,10 +131,12 @@ do {
     }
     print("- Done for $cnt entries\n");
 
+    // commit MySQL/MariaDB inserts
+    $mdb->commit();
     // commit CockroachDB inserts
     $cdb->commit();
 
-} while ($cnt > 99);
+} while ($cnt > $chunkSize-1);
 
 print("OK\n");
 
@@ -155,13 +153,14 @@ if ($r === false) {
 }
 
 do {
-    // prepare CockroachDB for insert
+    // prepare database transactions for insert
     $cdb->beginTransaction();
+    $mdb->beginTransaction();
 
-    // select and insert in 100 bulk
+    // select and insert in bulk
     $cnt = 0;
-    $result = $mdb->query("SELECT * FROM search WHERE mig=0 LIMIT 100");
-    print("- Chunk with 100 entries...\n");
+    $result = $mdb->query("SELECT * FROM search WHERE mig=0 LIMIT ".$chunkSize);
+    print("- Chunk with $chunkSize entries...\n");
     while ($data = $result->fetch(PDO::FETCH_ASSOC)) {
         try {
             $SQL = "INSERT INTO search (vid, word) 
@@ -182,10 +181,12 @@ do {
     }
     print("- Done for $cnt entries\n");
 
+    // commit MySQL/MariaDB inserts
+    $mdb->commit();
     // commit CockroachDB inserts
     $cdb->commit();
 
-} while ($cnt > 99);
+} while ($cnt > $chunkSize-1);
 
 print("OK\n");
 
@@ -202,13 +203,14 @@ if ($r === false) {
 }
 
 do {
-    // prepare CockroachDB for insert
+    // prepare database transactions for insert
     $cdb->beginTransaction();
+    $mdb->beginTransaction();
 
-    // select and insert in 100 bulk
+    // select and insert in bulk
     $cnt = 0;
-    $result = $mdb->query("SELECT * FROM log WHERE mig=0 LIMIT 100");
-    print("- Chunk with 100 entries...\n");
+    $result = $mdb->query("SELECT * FROM log WHERE mig=0 LIMIT ".$chunkSize);
+    print("- Chunk with $chunkSize entries...\n");
     while ($data = $result->fetch(PDO::FETCH_ASSOC)) {
         try {
             $SQL = "INSERT INTO audit (logtype, logdate, providerid, logcomment) 
@@ -230,10 +232,12 @@ do {
     }
     print("- Done for $cnt entries\n");
 
+    // commit MySQL/MariaDB inserts
+    $mdb->commit();
     // commit CockroachDB inserts
     $cdb->commit();
 
-} while ($cnt > 99);
+} while ($cnt > $chunkSize-1);
 
 print("OK\n");
 
