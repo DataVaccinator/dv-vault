@@ -47,8 +47,6 @@ func main() {
 
 	InitDatabase() // assign global DB object here
 
-	DoLog(LOG_TYPE_ERROR, 0, "Started service")
-
 	e := echo.New()
 
 	if cfg.DebugMode > 0 {
@@ -56,6 +54,7 @@ func main() {
 		e.Use(middleware.LoggerWithConfig(middleware.LoggerConfig{
 			Format: "${remote_ip} method=${method}, uri=${uri}, status=${status}\n",
 		}))
+		fmt.Println("Debug-Mode is activated.")
 	}
 
 	switch strings.ToUpper(cfg.IPExtractor) {
@@ -81,6 +80,10 @@ func main() {
 		e.AutoTLSManager.Cache = autocert.DirCache("certs/")
 	}
 
+	if cfg.DisableIPCheck != 0 {
+		fmt.Println("WARNING: IP-Check disabled! Do not use in production!")
+	}
+
 	e.HideBanner = true // hide the echo framework banner during start
 	e.GET("/", func(c echo.Context) error {
 		return c.String(http.StatusOK,
@@ -102,10 +105,16 @@ func main() {
 	e.POST("/", protocolHandler)          // bind protocol handler
 	e.POST("/index.php", protocolHandler) // bind protocol handler (legacy)
 
+	DoLog(LOG_TYPE_ERROR, 0, "Started service")
+
+	var sErr error
 	if cfg.LetsEncrypt > 0 {
-		e.Logger.Fatal(e.StartAutoTLS(cfg.IP + ":" + strconv.Itoa(cfg.Port)))
+		sErr = e.StartAutoTLS(cfg.IP + ":" + strconv.Itoa(cfg.Port))
 	} else {
-		e.Logger.Fatal(e.Start(cfg.IP + ":" + strconv.Itoa(cfg.Port)))
+		sErr = e.Start(cfg.IP + ":" + strconv.Itoa(cfg.Port))
+	}
+	if sErr != nil {
+		fmt.Printf("ERROR: %v\n", sErr)
 	}
 }
 
@@ -178,8 +187,8 @@ func checkCredentials(c echo.Context, clientRequest map[string]interface{}) erro
 	var allowedIP string = ""
 	sql := "SELECT password,ip FROM dv.provider WHERE providerid=$1"
 	DB.QueryRow(sql, sid).Scan(&pwd, &allowedIP)
-	if !strings.Contains(allowedIP, clientIP) {
-		go DoLog(LOG_TYPE_ERROR, sid, "Not allowed IP client address")
+	if cfg.DisableIPCheck == 0 && !strings.Contains(allowedIP, clientIP) {
+		go DoLog(LOG_TYPE_ERROR, sid, "Not allowed IP client address "+clientIP)
 		return errors.New("Not allowed IP client address")
 	}
 	if pwd != spwd {

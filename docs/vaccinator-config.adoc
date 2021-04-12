@@ -4,7 +4,9 @@
 
 == config.json
 
-The *config.json* has be located at the same place the vaccinator executable is located. The default content looks like this:
+The *config.json* has be located at the same place the vaccinator executable is located (default is /opt/vaccinator/). 
+
+The default content of config.json looks like this:
 [source,json]
 ----
 { 
@@ -14,7 +16,8 @@ The *config.json* has be located at the same place the vaccinator executable is 
     "listenPort": 443,
     "useLetsEncrypt": 0,
     "debugMode": 0,
-    "IPExtractor": ""
+    "IPExtractor": "",
+    "disableIPCheck": 0
 }
 ----
 
@@ -51,6 +54,11 @@ a|If not set (empty string), the DataVaccinator will determine source IP address
 
 In some cases, behind loadbalancers or proxy servers, this will return the same IP for all requests. Here you can advise to use other headers. The following values are available:
 
-. *XFF* -> Using the X-Forwared-For header
+. *XFF* -> Using the X-Forwarded-For header
 . *REALIP* -> Using the X-Real-IP header
+
+|disableIPCheck
+a|If set to *1*, the DataVaccinator will not verify the IP address of the calling client against the "IP" field in database table "provider". Default is *0*.
+
+CAUTION: This is useful in development environments, but should not be used in production.
 |=====

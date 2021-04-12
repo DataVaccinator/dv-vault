@@ -26,7 +26,7 @@ func InitDatabase() bool {
 	var poolConfig pgx.ConnPoolConfig
 	config, err := pgx.ParseConnectionString(cfg.ConnectionString)
 	if err != nil {
-		panic("Can not parse connection string")
+		panic("Can not parse your connection string")
 	}
 
 	poolConfig.ConnConfig = config
@@ -56,7 +56,7 @@ func InitDatabase() bool {
 	var w int
 	row := DB.QueryRow("SELECT COUNT(*) FROM dv.provider").Scan(&w)
 	if row != nil {
-		panic("Test query to 'providers' table failed")
+		panic("Test query to 'dv.providers' table failed. Maybe no entries?")
 	}
 
 	fmt.Printf("(maxConnections: %v) Done\n", maxConn)

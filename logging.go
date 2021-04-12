@@ -19,7 +19,11 @@ const (
 // You can run it async using go command to not slow down operations.
 func DoLog(logType int, provId int, message string) {
 	if cfg.DebugMode != 0 {
-		fmt.Printf("LOG-ENTRY: %v (PID %v)\n", message, provId)
+		if provId > 0 {
+			fmt.Printf("LOG-ENTRY: %v (PID %v)\n", message, provId)
+		} else {
+			fmt.Printf("LOG-ENTRY: %v\n", message)
+		}
 	}
 	sql := `INSERT INTO dv.audit (LOGTYPE, LOGDATE, PROVIDERID, LOGCOMMENT)
               VALUES($1, NOW(), $2, $3)`
