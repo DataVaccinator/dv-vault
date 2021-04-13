@@ -142,12 +142,6 @@ func protocolHandler(c echo.Context) error {
 		fmt.Printf("%v REQUEST: %v\n", c.RealIP(), clientRequest)
 	}
 
-	// handle all supported operations which do not need a login
-	switch op {
-	case "check":
-		return doCheck(c, clientRequest)
-	}
-
 	// check login credentials
 	err = checkCredentials(c, clientRequest)
 	if err != nil {
@@ -156,6 +150,8 @@ func protocolHandler(c echo.Context) error {
 
 	// handle all supported operations which need a login
 	switch op {
+	case "check":
+		return doCheck(c, clientRequest)
 	case "add":
 		return doAdd(c, clientRequest, false)
 	case "publish":
