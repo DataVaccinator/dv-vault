@@ -157,7 +157,9 @@ func protocolHandler(c echo.Context) error {
 	// handle all supported operations which need a login
 	switch op {
 	case "add":
-		return doAdd(c, clientRequest)
+		return doAdd(c, clientRequest, false)
+	case "publish":
+		return doAdd(c, clientRequest, true)
 	case "delete":
 		return doDelete(c, clientRequest)
 	case "update":

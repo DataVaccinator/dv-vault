@@ -8,11 +8,12 @@ import (
 )
 
 const (
-	LOG_TYPE_ADD    = 0
-	LOG_TYPE_GET    = 1
-	LOG_TYPE_UPDATE = 2
-	LOG_TYPE_DELETE = 3
-	LOG_TYPE_ERROR  = 9
+	LOG_TYPE_ADD     = 0
+	LOG_TYPE_GET     = 1
+	LOG_TYPE_UPDATE  = 2
+	LOG_TYPE_DELETE  = 3
+	LOG_TYPE_PUBLISH = 4
+	LOG_TYPE_ERROR   = 9
 )
 
 // DoLog creates an entry in the audit table.

@@ -32,11 +32,12 @@ func doCheck(c echo.Context, clientRequest map[string]interface{}) error {
 }
 
 // doAdd implements the "add" api operation
-func doAdd(c echo.Context, clientRequest map[string]interface{}) error {
+func doAdd(c echo.Context, clientRequest map[string]interface{}, isPublish bool) error {
 	data := GetString(clientRequest["data"], "")
 	uid := GetString(clientRequest["uid"], "")
 	sid := GetInt(clientRequest["sid"], 0)
 	words := GetStringArray(clientRequest["words"], []string{})
+	duration := GetInt(clientRequest["duration"], 0)
 
 	if data == "" || sid == 0 {
 		return generateError(c, DV_MISSING_PARAM, "Missing data")
@@ -44,33 +45,45 @@ func doAdd(c echo.Context, clientRequest map[string]interface{}) error {
 	if len(data) > 1024*1024 {
 		return generateError(c, DV_INVALID_PARAMSIZE, "Data bigger than 1MB")
 	}
+	if isPublish && (duration < 1 || duration > 365) {
+		return generateError(c, DV_INVALID_PARAMSIZE, "Invalid duration range")
+	}
 
-	var try = 0
-retry:
-	vid := GenerateVID()
-
-	sql := "INSERT INTO dv.data (VID, PAYLOAD, PROVIDERID, CREATIONDATE) " +
-		"VALUES ($1, $2, $3, NOW())"
-	_, err := DB.Exec(sql, vid, data, sid)
-	if err != nil {
-		var pge pgx.PgError
-		errors.As(err, &pge) // need to cast to get error codes
-		if pge.Code == "23505" {
-			// Duplicate key error. Thiy might happen every now and then.
-			// Therefore, try up to 4 times.
-			try = try + 1
-			if try < 4 {
-				goto retry
-			}
-			fmt.Println("Failed unique VID generation in 4 tries!")
+	var err error
+	var vid string
+	for try := 0; try < 4; try++ {
+		vid = GenerateVID()
+		if !isPublish {
+			// ADD function
+			sql := "INSERT INTO dv.data (VID, PAYLOAD, PROVIDERID, CREATIONDATE) " +
+				"VALUES ($1, $2, $3, NOW())"
+			_, err = DB.Exec(sql, vid, data, sid)
+		} else {
+			// PUBLISH function
+			sql := "INSERT INTO dv.data (VID, PAYLOAD, PROVIDERID, CREATIONDATE, DURATION) " +
+				"VALUES ($1, $2, $3, NOW(), $4)"
+			_, err = DB.Exec(sql, vid, data, sid, duration)
 		}
-
+		if err != nil {
+			var pge pgx.PgError
+			errors.As(err, &pge) // need to cast to get error codes
+			if pge.Code == "23505" {
+				// Duplicate key error. This might happen every now and then.
+				// Therefore, retry up to 4 times.
+				continue
+			}
+			return generateError(c, DV_INTERNAL_ERROR,
+				"Failed to store payload. Contact our support.")
+		}
+		break
+	}
+	if err != nil {
 		return generateError(c, DV_INTERNAL_ERROR,
 			"Failed to store payload. Contact our support.")
 	}
 
-	// Add any possible search words
-	if len(words) > 0 {
+	// Add any possible search words (only add, not publish)
+	if len(words) > 0 && !isPublish {
 		if insertSearchWords(vid, words) != true {
 			deleteOneVID(vid) // Rollback payload entry
 			return generateError(c, DV_INTERNAL_ERROR,
@@ -78,7 +91,11 @@ retry:
 		}
 	}
 
-	go DoLog(LOG_TYPE_ADD, sid, vid)
+	logType := LOG_TYPE_ADD
+	if isPublish {
+		logType = LOG_TYPE_PUBLISH
+	}
+	go DoLog(logType, sid, vid)
 
 	// Compile result
 	rResult := make(map[string]interface{})
@@ -168,10 +185,15 @@ func doUpdate(c echo.Context, clientRequest map[string]interface{}) error {
 
 	// Validate VID
 	pid := 0
-	sql := "SELECT PROVIDERID FROM dv.data WHERE VID=$1 AND PROVIDERID=$2"
-	DB.QueryRow(sql, vid, sid).Scan(&pid)
+	duration := 0
+	sql := "SELECT PROVIDERID, DURATION FROM dv.data WHERE VID=$1 AND PROVIDERID=$2"
+	DB.QueryRow(sql, vid, sid).Scan(&pid, &duration)
 	if pid < 1 {
 		return generateError(c, DV_VID_NOT_FOUND, "Entry with this VID not found")
+	}
+	if duration != 0 {
+		return generateError(c, DV_INVALID_FOR_PUBLISHED,
+			"Published entries are not allowed to update")
 	}
 
 	// Delete any search words.
@@ -242,8 +264,11 @@ func doGet(c echo.Context, clientRequest map[string]interface{}) error {
 	}
 
 	// Concat ANY() statement and build the select.
+	// NOTE: PROVIDERID has to match until DURATION is > 0 (published).
 	in := "'{" + strings.Join(vids, ",") + "}'"
-	sql := "SELECT VID, PAYLOAD FROM dv.data WHERE VID=ANY(" + in + "::bytes[]) AND PROVIDERID=$1"
+	sql := `SELECT VID, PAYLOAD FROM dv.data 
+	           WHERE VID=ANY(` + in + `::bytes[]) AND 
+			      (PROVIDERID=$1 OR DURATION > 0)`
 	rows, err := DB.Query(sql, sid)
 	if err != nil {
 		return generateError(c, DV_INTERNAL_ERROR,

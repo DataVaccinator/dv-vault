@@ -73,7 +73,8 @@ The system then returns two additional fields:
 |6	|Invalid encoding (check data values and JSON integrity).	|INVALID
 |7	|Not found (vid is not found in the system).	|INVALID
 |8	|Invalid partner (you are not allowed to access foreign data).	|INVALID
-|9	|Invalid parameter size (some parameter exceeds limits).	|INVALID
+|9	|Invalid parameter (some parameter exceeds limits or ranges).	|INVALID
+|10 |Not allowed for published data. | INVALID
 |99	|Some internal service error happened. Please contact support.	|ERROR
 |=======
 
@@ -109,10 +110,10 @@ This call is adding a new dataset to the system (eg PID).
 
 |status	|Either OK, INVALID or ERROR. See generic description for details.
 |uid	|User identifier provided by the API user during call (only if it was provided).
-|vid	|New Vaccination ID for the newly generated person (also VID). This may be stored by the service provider and get assigned to the calling client (identified by uid).
+|vid	|New Vaccination ID for the newly generated payload (also VID). This may be stored by the service provider and get assigned to the calling client (identified by uid).
 |=======
 
-IMPORTANT: If you forward some positive result to the client, please take the returned _vid_ and add this to your service provider database while assigning to the user. By this, you are able to send your client software a complete and up to date list of all VIDs at any time.
+IMPORTANT: As the service provider, if you forward some positive result of this function to the client, please take the returned _vid_ and add this to your service provider database while assigning to the user. By this, you are able to send your client software a complete and up to date list of all VIDs at any time.
 
 === Update dataset
 
@@ -270,6 +271,41 @@ Result:
 |vids	|Array of VIDs (Vaccination IDs) that matched your search. Empty array if there are no matches.
 |=======
 
+=== Publish
+
+This call is very similar to the *add* function. But while normal datasets can get only accessed by the originating service provider, published data can get accessed/retrieved by other service providers, too. For this, they only need to know the VID.
+
+NOTE: For security reasons, they also need valid access credentials (sid, spwd, allowed ip).
+
+While the data in DataVaccinator has to be always encrypted, the people who retrieve this data will need the correct password to decrypt. Please refer to the JavaScript class documentation for further details on this.
+
+The major differences to the *add* function are:
+
+. Payload data can not get updated (only deleted by the originator).
+. Publish does not support word search (no words accepted).
+. It needs a period after that it is automatically deleted.
+
+
+[cols="1,4"]
+|=======
+|Field	|Description
+
+|version	|2 (current protocol version)
+|op	|publish
+|data	|Encrypted payload containing all the Vaccination Data to be stored (string blob, use base64 encoding for binary data). Please follow the encoding scheme described in "Implementation Details".
+|uid	|User identifier provided by the API user.
+|period	|The number of days after which this data is automatically deleted. Valid ranges are 1 to 365. Other values will trigger an error.
+|=======
+
+[cols="1,4"]
+|=======
+|Field	|Description
+
+|status	|Either OK, INVALID or ERROR. See generic description for details.
+|uid	|User identifier provided by the API user during call (only if it was provided).
+|vid	|New Vaccination ID for the newly generated dataset (also VID). This may be stored by the service provider and get assigned to the calling client (identified by uid).
+|=======
+
 = Implementation of protocol forward
 
 This chapter explains, what a service provider has to do to successfully handle and forward REST protocol requests.
@@ -295,7 +331,7 @@ In addition, the service provider has to observe the functions to provide additi
 
 The update call will out date all other participants local caches. Therefore, they need to know about this. The only party able to tell them is you.
 
-This is done by acting in case of a positive "update" call. In case the DataVaccinator Vault announces success, please generate a time stamp (or random token) and provide it to all affected clients. By knowing the vid from the request, you should be able to know the affected persons (logins).
+This is done by acting in case of a positive "update" call. In case the DataVaccinator Vault announces success, please generate a time stamp (or random token) and provide it to all affected clients. By knowing the VID from the request, you should be able to know the affected logins.
 You send them this time stamp with their next request and they will have to call the *wipeCache()* function with this as parameter. 
 
 If the API recognises this time stamp/token as already known, nothing will happen. If it does not know this value yet, it will wipe it's cache and regenerate it on demand later.

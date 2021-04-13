@@ -131,20 +131,6 @@ while (true) {
     }
     print($pass);
 
-    // Invalid hex encoding for IV in data (removed for golang version)
-    /*
-    $r["sid"] = $serviceProviderID;
-    $r["spwd"] = $serviceProviderPwd;
-    $r["data"] = "cbc-aes-256:7f:75os3i1!#1tkuunp1fjoauw:btewwyzox3i3fe4cg6a1qzi8pqoqa55orzf4bcxtjfcf5chep998sj6";
-    $j = _parseVaccinatorResult(json_encode($r));
-    if ($j === NULL || $j === false) { print("unexpected result (no json)\n"); break; }
-    if ($j["status"] != "INVALID") {
-        print "Expected status INVALID for wrong hex encoding, got [".$j["status"]."] instead.\n";
-        break;
-    }
-    print($pass);
-    */
-
     /**
      * *******************************************
      * Test adding data (must have success)
@@ -180,6 +166,60 @@ while (true) {
     $uid = getFromHash($j, "uid");
     if ($uid != 12345) {
         print "Expected returning the same uid as sent (12345), got [$uid] instead (add).\n";
+        break;
+    }
+    print($pass);
+
+    /**
+     * *******************************************
+     * Test publishing data (must have success)
+     * *******************************************
+     */
+    print("\nTesting to publish data:\n");
+
+    // Using Publish with missing duration
+    $r["op"] = "publish";
+    unset($r["words"]); // no search words used
+    $j = _parseVaccinatorResult(json_encode($r));
+    if ($j === NULL || $j === false) { print("unexpected result (no json)\n"); break; }
+    if ($j["status"] != "INVALID") {
+        print "Expected status INVALID for 'publish' operation with missing duration, got [".$j["status"]."] instead.\n";
+        break;
+    }
+    print($pass);
+
+    // Using Publish with invalid duration (out of range)
+    $r["duration"] = 22222; // Test invalid days value
+    $j = _parseVaccinatorResult(json_encode($r));
+    if ($j === NULL || $j === false) { print("unexpected result (no json)\n"); break; }
+    if ($j["status"] != "INVALID") {
+        print "Expected status INVALID for 'publish' operation with to big duration, got [".$j["status"]."] instead.\n";
+        break;
+    }
+    print($pass);
+
+    // Using valid Publish
+    $r["duration"] = 10; // Test 10 days value
+    $j = _parseVaccinatorResult(json_encode($r));
+    if ($j === NULL || $j === false) { print("unexpected result (no json)\n"); break; }
+    if ($j["status"] != "OK") {
+        print "Expected status OK for 'publish' operation, got [".$j["status"]."] instead.\n";
+        break;
+    }
+
+    // got some valid vid?
+    $vidP = getFromHash($j, "vid");
+    if (strlen($vidP) < 16) {
+        print "Expected some valid vid as result from 'publish', got [$vidP] instead.\n";
+        break;
+    }
+    print "NOTE: New published user VID: $vidP\n";
+    array_push($remove, $vidP); // for later deletion
+
+    // did I get the uid value back?
+    $uid = getFromHash($j, "uid");
+    if ($uid != 12345) {
+        print "Expected returning the same uid as sent (12345), got [$uid] instead (publish).\n";
         break;
     }
     print($pass);
@@ -230,6 +270,17 @@ while (true) {
     if ($j === NULL || $j === false) { print("unexpected result (no json)\n"); break; }
     if ($j["status"] != "INVALID") {
         print "Expected status INVALID for invalid 'update' vid, got [".$j["status"]."] instead.\n";
+        break;
+    }
+    print($pass);
+
+    // With published dataset
+    $r["data"] = "cbc-aes-256:7f:29a1c8b68d8a:btewwyzox3i3fe4cg6a1qzi8pqoqa55orzf4bcxtjfcf5chep998sj6";
+    $r["vid"] = $vidP; // published dataset
+    $j = _parseVaccinatorResult(json_encode($r));
+    if ($j === NULL || $j === false) { print("unexpected result (no json)\n"); break; }
+    if ($j["status"] != "INVALID") {
+        print "Expected status INVALID for invalid 'update' on published data, got [".$j["status"]."] instead.\n";
         break;
     }
     print($pass);
