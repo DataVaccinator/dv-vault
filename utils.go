@@ -148,6 +148,8 @@ func MakeUnique(names []string) []string {
 func deleteOneVID(vid string) bool {
 	_, err := DB.Exec("DELETE FROM dv.data WHERE VID=$1", vid)
 	if err != nil {
+		LogInternalf("Failed to delete payload (deleteOneVID) for VID %v. Error: %v",
+			vid, err)
 		return false
 	}
 	return true
@@ -165,10 +167,16 @@ func insertSearchWords(vid string, words []string) bool {
 		return false
 	}
 	for _, word := range words {
-		tx.Exec("INSERT INTO dv.search (VID, WORD) VALUES($1, $2)", vid, word)
+		_, err = tx.Exec("INSERT INTO dv.search (VID, WORD) VALUES($1, $2)", vid, word)
+		if err != nil {
+			break
+		}
 	}
-	err = tx.Commit()
+	if err == nil {
+		err = tx.Commit()
+	}
 	if err != nil {
+		LogInternalf("Failed to commit store words with SQL Error: %v", err)
 		tx.Rollback()
 		return false
 	}
@@ -183,4 +191,8 @@ func ValidateSearchWord(vid string) bool {
 		return false
 	}
 	return true
+}
+
+func LogInternalf(message string, params ...interface{}) {
+	fmt.Printf("ERROR: "+message+"\n", params...)
 }

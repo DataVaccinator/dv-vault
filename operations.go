@@ -51,16 +51,17 @@ func doAdd(c echo.Context, clientRequest map[string]interface{}, isPublish bool)
 
 	var err error
 	var vid string
+	var sql string
 	for try := 0; try < 4; try++ {
 		vid = GenerateVID()
 		if !isPublish {
 			// ADD function
-			sql := "INSERT INTO dv.data (VID, PAYLOAD, PROVIDERID, CREATIONDATE) " +
+			sql = "INSERT INTO dv.data (VID, PAYLOAD, PROVIDERID, CREATIONDATE) " +
 				"VALUES ($1, $2, $3, NOW())"
 			_, err = DB.Exec(sql, vid, data, sid)
 		} else {
 			// PUBLISH function
-			sql := "INSERT INTO dv.data (VID, PAYLOAD, PROVIDERID, CREATIONDATE, DURATION) " +
+			sql = "INSERT INTO dv.data (VID, PAYLOAD, PROVIDERID, CREATIONDATE, DURATION) " +
 				"VALUES ($1, $2, $3, NOW(), $4)"
 			_, err = DB.Exec(sql, vid, data, sid, duration)
 		}
@@ -72,12 +73,14 @@ func doAdd(c echo.Context, clientRequest map[string]interface{}, isPublish bool)
 				// Therefore, retry up to 4 times.
 				continue
 			}
+			LogInternalf("Failed to store payload (add/publish) with SQL: [%v] Error: %v", sql, pge)
 			return generateError(c, DV_INTERNAL_ERROR,
 				"Failed to store payload. Contact our support.")
 		}
 		break
 	}
 	if err != nil {
+		LogInternalf("Failed to generate/insert some unique VID (add/publish)")
 		return generateError(c, DV_INTERNAL_ERROR,
 			"Failed to store payload. Contact our support.")
 	}
@@ -125,6 +128,7 @@ func doDelete(c echo.Context, clientRequest map[string]interface{}) error {
 	// Start transaction
 	tx, err := DB.Begin()
 	if err != nil {
+		LogInternalf("Failed to start transaction (delete). Error: %v", err)
 		return generateError(c, DV_INTERNAL_ERROR,
 			"Failed to start a new transaction. Contact our support.")
 	}
@@ -139,6 +143,7 @@ func doDelete(c echo.Context, clientRequest map[string]interface{}) error {
 	_, err = tx.Exec(sql, sid)
 	if err != nil {
 		tx.Rollback()
+		LogInternalf("Failed to delete searchwords (delete) with SQL: [%v] Error: %v", sql, err)
 		return generateError(c, DV_INTERNAL_ERROR, "Failed to delete search words")
 	}
 
@@ -147,12 +152,14 @@ func doDelete(c echo.Context, clientRequest map[string]interface{}) error {
 	_, err = tx.Exec(sql, sid)
 	if err != nil {
 		tx.Rollback()
+		LogInternalf("Failed to delete payload (delete) with SQL: [%v] Error: %v", sql, err)
 		return generateError(c, DV_INTERNAL_ERROR, "Failed to delete")
 	}
 
 	err = tx.Commit()
 	if err != nil {
 		tx.Rollback()
+		LogInternalf("Failed to commit delete. Error: %v", err)
 		return generateError(c, DV_INTERNAL_ERROR,
 			"Failed to commit deletions. Contact our support.")
 	}
@@ -200,6 +207,7 @@ func doUpdate(c echo.Context, clientRequest map[string]interface{}) error {
 	// Start transaction
 	tx, err := DB.Begin()
 	if err != nil {
+		LogInternalf("Failed to start db transaction (update). Error: %v", err)
 		return generateError(c, DV_INTERNAL_ERROR,
 			"Failed to create new transaction. Contact our support.")
 	}
@@ -207,6 +215,7 @@ func doUpdate(c echo.Context, clientRequest map[string]interface{}) error {
 	_, err = tx.Exec(sql, vid)
 	if err != nil {
 		tx.Rollback()
+		LogInternalf("Failed to delete words (update). SQL: %v Error: %v", sql, err)
 		return generateError(c, DV_INTERNAL_ERROR,
 			"Failed to delete searchwords. Contact our support.")
 	}
@@ -216,6 +225,7 @@ func doUpdate(c echo.Context, clientRequest map[string]interface{}) error {
 	_, err = tx.Exec(sql, data, vid)
 	if err != nil {
 		tx.Rollback()
+		LogInternalf("Failed to delete payload (update). SQL: %v Error: %v", sql, err)
 		return generateError(c, DV_INTERNAL_ERROR,
 			"Failed to update payload. Contact our support.")
 	}
@@ -231,6 +241,7 @@ func doUpdate(c echo.Context, clientRequest map[string]interface{}) error {
 	err = tx.Commit()
 	if err != nil {
 		tx.Rollback()
+		LogInternalf("Failed to commit update. Error: %v", err)
 		return generateError(c, DV_INTERNAL_ERROR,
 			"Failed to update. Contact our support.")
 	}
@@ -271,6 +282,7 @@ func doGet(c echo.Context, clientRequest map[string]interface{}) error {
 			      (PROVIDERID=$1 OR DURATION > 0)`
 	rows, err := DB.Query(sql, sid)
 	if err != nil {
+		LogInternalf("Failed to query (get) with SQL: %v Error: %v", sql, err)
 		return generateError(c, DV_INTERNAL_ERROR,
 			"Failed to query. Contact our support.")
 	}
@@ -282,7 +294,7 @@ func doGet(c echo.Context, clientRequest map[string]interface{}) error {
 		var payload pgtype.Varchar
 		err = rows.Scan(&vid, &payload)
 		if err != nil {
-			fmt.Println("Unexpected error while processing query result. Contact support.")
+			LogInternalf("Unexpected error while processing query result (get). Error: %v", err)
 			continue
 		}
 		dResult := make(map[string]interface{})
@@ -347,6 +359,7 @@ func doSearch(c echo.Context, clientRequest map[string]interface{}) error {
 		"\n) AND PROVIDERID=$1\n"
 	rows, err := DB.Query(sql, sid)
 	if err != nil {
+		LogInternalf("Query error in search. SQL: %v Error: %v", sql, err)
 		return generateError(c, DV_INTERNAL_ERROR,
 			"Failed to query searchwords. Contact our support.")
 	}
@@ -357,7 +370,7 @@ func doSearch(c echo.Context, clientRequest map[string]interface{}) error {
 		var vid pgtype.Varchar
 		err = rows.Scan(&vid)
 		if err != nil {
-			fmt.Println("Unexpected error while processing search query result. Contact support.")
+			LogInternalf("Unexpected error while processing search result (search). Error: %v", err)
 			continue
 		}
 		results = append(results, vid.String)
