@@ -148,7 +148,7 @@ func MakeUnique(names []string) []string {
 func deleteOneVID(vid string) bool {
 	_, err := DB.Exec("DELETE FROM dv.data WHERE VID=$1", vid)
 	if err != nil {
-		LogInternalf("Failed to delete payload (deleteOneVID) for VID %v. Error: %v",
+		LogInternalf("Failed to delete payload (deleteOneVID) for VID %v. %v",
 			vid, err)
 		return false
 	}
@@ -193,6 +193,8 @@ func ValidateSearchWord(vid string) bool {
 	return true
 }
 
+// LogInternalf currently prints the message to the StdOut console.
+// It adds "ERROR:" in front of the message.
 func LogInternalf(message string, params ...interface{}) {
 	fmt.Printf("ERROR: "+message+"\n", params...)
 }

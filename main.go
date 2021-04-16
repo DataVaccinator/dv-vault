@@ -47,6 +47,8 @@ func main() {
 
 	InitDatabase() // assign global DB object here
 
+	go cleanupHeartBeat() // start background task for DB cleanup
+
 	e := echo.New()
 
 	if cfg.DebugMode > 0 {
@@ -176,7 +178,7 @@ func protocolHandler(c echo.Context) error {
 func checkCredentials(c echo.Context, clientRequest map[string]interface{}) error {
 	sid := GetInt(clientRequest["sid"], 0)
 	spwd := GetString(clientRequest["spwd"], "")
-	if spwd == "" {
+	if spwd == "" || sid < 1 {
 		return errors.New("Invalid credentials")
 	}
 

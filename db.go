@@ -62,3 +62,21 @@ func InitDatabase() bool {
 	fmt.Printf("(maxConnections: %v) Done\n", maxConn)
 	return true
 }
+
+// cleanupHeartBeat is called async to find and delete expired
+// published entries in the database every two hours.
+func cleanupHeartBeat() {
+	for range time.Tick(time.Hour * 2) {
+		if cfg.DebugMode > 0 {
+			fmt.Printf("Cleanup expired and published payloads.\n")
+		}
+		sql := `DELETE FROM dv.data 
+		          WHERE DURATION > 0 AND 
+				    NOW() > CREATIONDATE + CONCAT(DURATION::text, ' days')::INTERVAL`
+		_, err := DB.Exec(sql)
+		if err != nil {
+			LogInternalf("Failed to delete published and expired data (cleanupHeartBeat). %v",
+				err)
+		}
+	}
+}
