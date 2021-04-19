@@ -18,16 +18,21 @@ import (
 // doCheck implements the "check" api operation
 func doCheck(c echo.Context, clientRequest map[string]interface{}) error {
 	// Announce that "search" functionality is available
-	rPlugin := make(map[string]interface{})
-	rPlugin["name"] = "search"
-	rPlugin["vendow"] = "DataVaccinator"
-	rPlugin["license"] = "AGPL"
+	rPlugin1 := make(map[string]interface{})
+	rPlugin1["name"] = "search"
+	rPlugin1["vendow"] = "DataVaccinator"
+	rPlugin1["license"] = "AGPL"
+
+	rPlugin2 := make(map[string]interface{})
+	rPlugin2["name"] = "publish"
+	rPlugin2["vendow"] = "DataVaccinator"
+	rPlugin2["license"] = "AGPL"
 
 	// Compile result
 	rResult := make(map[string]interface{})
 	rResult["time"] = GetCurrentDateTime()
 	rResult["version"] = SERVER_VERSION
-	rResult["plugins"] = []interface{}{rPlugin}
+	rResult["plugins"] = []interface{}{rPlugin1, rPlugin2}
 	return generateResult(c, rResult)
 }
 
@@ -255,7 +260,7 @@ func doUpdate(c echo.Context, clientRequest map[string]interface{}) error {
 }
 
 // doGet implements the "get" api operation
-func doGet(c echo.Context, clientRequest map[string]interface{}) error {
+func doGet(c echo.Context, clientRequest map[string]interface{}, isPublish bool) error {
 	uid := GetString(clientRequest["uid"], "")
 	sid := GetInt(clientRequest["sid"], 0)
 	vidList := GetString(clientRequest["vid"], "")
@@ -275,12 +280,24 @@ func doGet(c echo.Context, clientRequest map[string]interface{}) error {
 	}
 
 	// Concat ANY() statement and build the select.
-	// NOTE: PROVIDERID has to match until DURATION is > 0 (published).
+	// NOTE: PROVIDERID has to match. Published entried are not returned.
 	in := "'{" + strings.Join(vids, ",") + "}'"
-	sql := `SELECT VID, PAYLOAD FROM dv.data 
-	           WHERE VID=ANY(` + in + `::bytes[]) AND 
-			      (PROVIDERID=$1 OR DURATION > 0)`
-	rows, err := DB.Query(sql, sid)
+	sql := ""
+	var rows *pgx.Rows
+	var err error
+	if isPublish == false {
+		// function "get"
+		sql = `SELECT VID, PAYLOAD FROM dv.data 
+		    	WHERE VID=ANY(` + in + `::bytes[]) AND 
+					PROVIDERID=$1 AND DURATION < 1`
+		rows, err = DB.Query(sql, sid)
+	} else {
+		// function "getpublished"
+		sql = `SELECT VID, PAYLOAD FROM dv.data 
+		    	WHERE VID=ANY(` + in + `::bytes[]) AND 
+					DURATION > 0`
+		rows, err = DB.Query(sql)
+	}
 	if err != nil {
 		LogInternalf("Failed to query (get) with SQL: %v Error: %v", sql, err)
 		return generateError(c, DV_INTERNAL_ERROR,

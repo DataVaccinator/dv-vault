@@ -39,6 +39,7 @@ $r["sid"] = $serviceProviderID;
 $r["spwd"] = $serviceProviderPwd;
 $remove = array(); // will have a list of VIDs to remove at the end
 $supportsSearch = false; // default
+$supportsPublish = false; // default
 $pass = "- pass\n";
 $someKey = "OAm6_Q%Xk*08";
 
@@ -60,14 +61,20 @@ while (true) {
     }
     $p = getFromHash($j, "plugins", array());
     foreach ($p as $plugin) {
-      if ($plugin['name'] == "search") {
-          $supportsSearch = true;
-          break;
-      }
+        if ($plugin['name'] == "search") {
+            $supportsSearch = true;
+        }
+        if ($plugin['name'] == "publish") {
+            $supportsPublish = true;
+        }
     }
     print($pass);
+
     if ($supportsSearch) {
-        print("\nNOTE: Server supports 'search' module. We will test this, too.\n");
+        print("NOTE: Server supports 'search' module. We will test this, too.\n");
+    }
+    if ($supportsPublish) {
+        print("NOTE: Server supports 'publish' module. We will test this, too.\n");
     }
     
     /**
@@ -175,54 +182,58 @@ while (true) {
      * Test publishing data (must have success)
      * *******************************************
      */
-    print("\nTesting to publish data:\n");
+    if ($supportsPublish) {
+        print("\nTesting to publish data:\n");
 
-    // Using Publish with missing duration
-    $r["op"] = "publish";
-    unset($r["words"]); // no search words used
-    $j = _parseVaccinatorResult(json_encode($r));
-    if ($j === NULL || $j === false) { print("unexpected result (no json)\n"); break; }
-    if ($j["status"] != "INVALID") {
-        print "Expected status INVALID for 'publish' operation with missing duration, got [".$j["status"]."] instead.\n";
-        break;
-    }
-    print($pass);
+        // Using Publish with missing duration
+        $r["op"] = "publish";
+        unset($r["words"]); // no search words used
+        $j = _parseVaccinatorResult(json_encode($r));
+        if ($j === NULL || $j === false) { print("unexpected result (no json)\n"); break; }
+        if ($j["status"] != "INVALID") {
+            print "Expected status INVALID for 'publish' operation with missing duration, got [".$j["status"]."] instead.\n";
+            break;
+        }
+        print($pass);
 
-    // Using Publish with invalid duration (out of range)
-    $r["duration"] = 22222; // Test invalid days value
-    $j = _parseVaccinatorResult(json_encode($r));
-    if ($j === NULL || $j === false) { print("unexpected result (no json)\n"); break; }
-    if ($j["status"] != "INVALID") {
-        print "Expected status INVALID for 'publish' operation with to big duration, got [".$j["status"]."] instead.\n";
-        break;
-    }
-    print($pass);
+        // Using Publish with invalid duration (out of range)
+        $r["duration"] = 22222; // Test invalid days value
+        $j = _parseVaccinatorResult(json_encode($r));
+        if ($j === NULL || $j === false) { print("unexpected result (no json)\n"); break; }
+        if ($j["status"] != "INVALID") {
+            print "Expected status INVALID for 'publish' operation with to big duration, got [".$j["status"]."] instead.\n";
+            break;
+        }
+        print($pass);
 
-    // Using valid Publish
-    $r["duration"] = 10; // Test 10 days value
-    $j = _parseVaccinatorResult(json_encode($r));
-    if ($j === NULL || $j === false) { print("unexpected result (no json)\n"); break; }
-    if ($j["status"] != "OK") {
-        print "Expected status OK for 'publish' operation, got [".$j["status"]."] instead.\n";
-        break;
-    }
+        // Using valid Publish
+        $r["duration"] = 10; // Test 10 days value
+        $j = _parseVaccinatorResult(json_encode($r));
+        if ($j === NULL || $j === false) { print("unexpected result (no json)\n"); break; }
+        if ($j["status"] != "OK") {
+            print "Expected status OK for 'publish' operation, got [".$j["status"]."] instead.\n";
+            break;
+        }
 
-    // got some valid vid?
-    $vidP = getFromHash($j, "vid");
-    if (strlen($vidP) < 16) {
-        print "Expected some valid vid as result from 'publish', got [$vidP] instead.\n";
-        break;
-    }
-    print "NOTE: New published user VID: $vidP\n";
-    array_push($remove, $vidP); // for later deletion
+        // got some valid vid?
+        $vidP = getFromHash($j, "vid");
+        if (strlen($vidP) < 16) {
+            print "Expected some valid vid as result from 'publish', got [$vidP] instead.\n";
+            break;
+        }
+        print "NOTE: New published user VID: $vidP\n";
+        array_push($remove, $vidP); // for later deletion
 
-    // did I get the uid value back?
-    $uid = getFromHash($j, "uid");
-    if ($uid != 12345) {
-        print "Expected returning the same uid as sent (12345), got [$uid] instead (publish).\n";
-        break;
+        // did I get the uid value back?
+        $uid = getFromHash($j, "uid");
+        if ($uid != 12345) {
+            print "Expected returning the same uid as sent (12345), got [$uid] instead (publish).\n";
+            break;
+        }
+        print($pass);
+
+        unset($r["duration"]);
     }
-    print($pass);
 
     /**
      * *******************************************
@@ -274,16 +285,18 @@ while (true) {
     }
     print($pass);
 
-    // With published dataset
-    $r["data"] = "cbc-aes-256:7f:29a1c8b68d8a:btewwyzox3i3fe4cg6a1qzi8pqoqa55orzf4bcxtjfcf5chep998sj6";
-    $r["vid"] = $vidP; // published dataset
-    $j = _parseVaccinatorResult(json_encode($r));
-    if ($j === NULL || $j === false) { print("unexpected result (no json)\n"); break; }
-    if ($j["status"] != "INVALID") {
-        print "Expected status INVALID for invalid 'update' on published data, got [".$j["status"]."] instead.\n";
-        break;
+    if ($supportsPublish) {
+        // With published dataset
+        $r["data"] = "cbc-aes-256:7f:29a1c8b68d8a:btewwyzox3i3fe4cg6a1qzi8pqoqa55orzf4bcxtjfcf5chep998sj6";
+        $r["vid"] = $vidP; // published dataset
+        $j = _parseVaccinatorResult(json_encode($r));
+        if ($j === NULL || $j === false) { print("unexpected result (no json)\n"); break; }
+        if ($j["status"] != "INVALID") {
+            print "Expected status INVALID for invalid 'update' on published data, got [".$j["status"]."] instead.\n";
+            break;
+        }
+        print($pass);
     }
-    print($pass);
 
     /**
      * *******************************************
@@ -328,7 +341,7 @@ while (true) {
     
     // retrieve some VID using the search function on modified value "Meier"
     if ($supportsSearch) {
-      print("\nTesting 'search' plugin function:\n");
+      print("\nTesting 'search' plugin functions:\n");
       // search one word
       $r["op"] = "search";
       $r["words"] = _generateSearchHash("Meier", false); // modified by update before!
@@ -361,6 +374,41 @@ while (true) {
           break;
       }
       print($pass);
+
+      unset($r["words"]);
+    }
+
+    if ($supportsPublish) {
+        print("\nTesting 'publish' plugin functions:\n");
+
+        $r["op"] = "get";
+        $r["vid"] = $vidP; // published dataset
+        $j = _parseVaccinatorResult(json_encode($r));
+        if ($j === NULL || $j === false) { print("unexpected result (no json)\n"); break; }
+        if ($j["status"] != "OK") {
+            print "Expected status OK for 'getpublished' operation, got [".$j["status"]."] instead.\n";
+            break;
+        }
+        if ($j["data"][$vid]["data"] != false) {
+            print "Expected data to be false for 'get' on published data, got [".$j["data"][$vid]["data"]."] instead.\n";
+            break;
+        }
+        print($pass);
+
+        $r["op"] = "getpublished";
+        $r["vid"] = $vidP; // published dataset
+        $j = _parseVaccinatorResult(json_encode($r));
+        if ($j === NULL || $j === false) { print("unexpected result (no json)\n"); break; }
+        if ($j["status"] != "OK") {
+            print "Expected status OK for 'getpublished' operation, got [".$j["status"]."] instead.\n";
+            break;
+        }
+        if ($j["data"][$vidP]["data"] == false) {
+            print "Expected data to be set for 'getpublished' on published data, got [".$j["data"][$vidP]["data"]."] instead.\n";
+            break;
+        }
+        print($pass);
+
     }
 
     break; // leave endless while () loop
@@ -378,7 +426,7 @@ foreach($remove as $toRem) {
     $r["spwd"] = $serviceProviderPwd;
     $r["op"] = "delete";
     $r["version"] = 2;
-    $r["vid"] = $toRem . " " . "e6ec07c19fbadbd062028cedbe4ab7e5";
+    $r["vid"] = $toRem;
     $j = _parseVaccinatorResult(json_encode($r));
     if ($j === NULL || $j === false) { print("unexpected result (no json)\n"); }
     if ($j["status"] != "OK") {

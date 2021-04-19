@@ -163,7 +163,9 @@ func protocolHandler(c echo.Context) error {
 	case "update":
 		return doUpdate(c, clientRequest)
 	case "get":
-		return doGet(c, clientRequest)
+		return doGet(c, clientRequest, false)
+	case "getpublished":
+		return doGet(c, clientRequest, true)
 	case "search":
 		return doSearch(c, clientRequest)
 	}
