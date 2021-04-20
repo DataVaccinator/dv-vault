@@ -1,22 +1,23 @@
 # DataVaccinator Vault
 This is the DataVaccinator Vault platform. It has to be installed on some Linux environment in order to provide the service.
 
-The DataVaccinator Vault platform offers
+## The DataVaccinator Vault platform offers
 
-* Multi tenant use (multiple service providers served on the same platform).
-* Word based search using searchable symmetric encryption techniques (SSE).
-* Can use [Let's Encrypt certificates](https://letsencrypt.org/) out of the box.
-* Fully automatic IP whitelisting by only allowing API requests from dedicated IP addresses.
-* Installer-Script supports **CentOS**, **Red Hat**, **Arch Linux**, **Suse Linux**, **Ubuntu** and **Debian** systems (allx86_64).
-* Installer-Script automatically generates SystemD daemon, system user and group, database user and database structure.
-* DataVaccinator Vault supports working behind proxy servers and loadbalancers (like [HAProxy](http://www.haproxy.org/)).
+* **Multi tenant use** (multiple service providers served on the same platform).
+* **Word based search** using searchable symmetric encryption techniques (SSE).
+* Can use [**Let's Encrypt** certificates](https://letsencrypt.org/) out of the box.
+* Fully automatic **IP whitelisting** by only allowing API requests from dedicated IP addresses.
+* **Installer-Script** supports **CentOS**, **Red Hat**, **Arch Linux**, **Suse Linux**, **Ubuntu** and **Debian** systems (all x86_64).
+* Installer-Script automatically generates **SystemD daemon**, system user and group, database user and database structure.
+* DataVaccinator Vault supports working behind **proxy servers** and **loadbalancers** (like [HAProxy](http://www.haproxy.org/)).
+* It supports [**CORS**](https://fetch.spec.whatwg.org/#cors-protocol) to avoid issues with cross origin requests.
 
-It requires:
+## It requires:
 
-* Some Linux server (Intel/AMD, x86_64)
-* [CockroachDB](https://www.cockroachlabs.com/product) database and drivers
+* Some **Linux** server (Intel/AMD, x86_64)
+* [**CockroachDB**](https://www.cockroachlabs.com/product) database and drivers
 
-What is missing:
+## What is missing:
 
 * There is currently no web-gui for managing service providers.
 * Currently no support for ARM systems.
