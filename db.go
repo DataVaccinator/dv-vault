@@ -70,9 +70,15 @@ func cleanupHeartBeat() {
 		if cfg.DebugMode > 0 {
 			fmt.Printf("Cleanup expired and published payloads.\n")
 		}
+		/*
+			// slower version, but more easy to read
+			sql := `DELETE FROM dv.data
+			          WHERE DURATION > 0 AND
+					    NOW() > CREATIONDATE + CONCAT(DURATION::text, ' days')::INTERVAL`
+		*/
 		sql := `DELETE FROM dv.data 
-		          WHERE DURATION > 0 AND 
-				    NOW() > CREATIONDATE + CONCAT(DURATION::text, ' days')::INTERVAL`
+				  WHERE DURATION > 0 AND 
+				    CAST(NOW() - CREATIONDATE AS INT) > DURATION * 86400`
 		_, err := DB.Exec(sql)
 		if err != nil {
 			LogInternalf("Failed to delete published and expired data (cleanupHeartBeat). %v",

@@ -6,5 +6,6 @@
     "useLetsEncrypt": 0,
     "debugMode": 0,
     "IPExtractor": "",
-    "disableIPCheck": 0
+    "disableIPCheck": 0,
+    "CORSDomains": ""
 }

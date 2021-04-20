@@ -86,6 +86,16 @@ func main() {
 		fmt.Println("WARNING: IP-Check disabled! Do not use in production!")
 	}
 
+	if cfg.CORSDomains != "" {
+		// Enable CORS (https://fetch.spec.whatwg.org/)
+		domains := strings.Split(cfg.CORSDomains, ",")
+		e.Use(middleware.CORSWithConfig(middleware.CORSConfig{
+			AllowOrigins: domains,
+			AllowMethods: []string{http.MethodGet, http.MethodPut, http.MethodPost},
+		}))
+		fmt.Printf("NOTE: Enabled CORS domains for \"%v\"\n", cfg.CORSDomains)
+	}
+
 	e.HideBanner = true // hide the echo framework banner during start
 	e.GET("/", func(c echo.Context) error {
 		return c.String(http.StatusOK,
