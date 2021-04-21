@@ -33,6 +33,8 @@ jobs:
 
       - name: Checkin DataVaccinator Vault Setup
         run: |
+          git config --global user.email "build@datavaccinator.com"
+          git config --global user.name "GitHub Automatic Build"
           git add ./setup/dv-vault-*_setup.sh
           git commit -m"Re-compiled most recent setup"
           git push
