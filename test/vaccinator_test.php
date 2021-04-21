@@ -16,17 +16,11 @@
 | written permission from the original author(s).
 +--------------------------------------------------------*/
 
-/**
- * Comandline test-tool for vaccinator service protocol.
- * 
- * Call with DataVaccinator Vault URL as parameter.
- */
-
 $serviceProviderID  = 1; // default by setup script
 $serviceProviderPwd = "vaccinator"; // default by setup script
 
 if (count($argv) < 2) {
-    print("Please provide URL for DataVaccinator Vault (like https://service.vaccinator.com)\n");
+    print("Please provide URL{:Port} for DataVaccinator Vault (like https://service.vaccinator.com)\n");
     exit();
 }
 
@@ -455,8 +449,7 @@ function _parseVaccinatorResult($json) {
     $data = array();
     $data["json"] = $json;
     $error = "";
-    // print "URL: $url\n";
-    $res =  DoRequest($url, $data, null, "", $error, 8, 0, '', false);
+    $res =  DoRequest($url, $data, $error, 8);
     $j = json_decode($res, true);
     // print_r($res);
     // print_r($j);
