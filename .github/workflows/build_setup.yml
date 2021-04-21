@@ -1,6 +1,6 @@
 # This is a basic workflow to help you get started with Actions
 
-name: CI
+name: Build Setup
 
 # Controls when the action will run. 
 on:
@@ -25,12 +25,12 @@ jobs:
       # Checks-out your repository under $GITHUB_WORKSPACE, so your job can access it
       - uses: actions/checkout@v2
 
-      # Runs a single command using the runners shell
-      - name: Run a one-line script
+      # Install Makeself
+      - name: Install Makeself
+        run: |
+          export DEBIAN_FRONTEND=noninteractive
+          apt-get -yq install makeself
+        
+      # Compile DataVaccinator Setup
+      - name: Compile DataVaccinator Setup
         run: make VERSION=1.0.0
-
-      # Runs a set of commands using the runners shell
-      #- name: Run a multi-line script
-      #  run: |
-      #    echo Add other actions to build,
-      #    echo test, and deploy your project.
