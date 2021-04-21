@@ -2,9 +2,15 @@
 :author: DataVaccinator Team
 :email: info@datavaccinator.com
 
+{empty}
+
 This folder contains compiled setups, ready for distribution on Linux machines (Debian, Ubuntu, RedHAT, CentOS, Suse, Arch).
 
-== Creation of setups
+Setups are currently created by manually triggering the corresponding github action.
+
+Due to save space and prevent the repository from getting bigger and bigger, the setup is not generated automatically on every push or commit.
+
+== Manual creation of setups
 
 The setups are created by calling
 ----
@@ -16,6 +22,7 @@ from the main directory.
 ----
 make clean
 ----
+This deletes the temporary files needed for setup creation and all setups in "setup" folder.
 
 == Run setups
 

@@ -29,5 +29,33 @@ The DataVaccinator Vault protects your sensitive data and information against ab
 
 Get more information, support and contact at <https://www.datavaccinator.com>.
 
+# Get started
+In order to run a DataVaccinator Vault, please follow this guide for installation on a dedicated Linux machine:
+
+1. Install [CockroachDB](https://www.cockroachlabs.com/product) on the machine.
+2. Download the DataVaccinator setup from setup/ folder to some temporary directory on your machine.
+3. Run it like this:  
+`sudo sh dv-vault-1.0.0_x86_64_setup.sh`
+4. Follow the steps from the setup script.
+5. Edit the `conf.json` file to your needs. 
+   - By default it is located at `/etc/vaccinator/config.json` folder.
+   - Check the docs/vaccinator-config.adoc for details about the options.
+   - Remember to use `sudo` to edit this file.
+6. Start the service using  
+  `sudo systemctl start vaccinator`
+7. Control service start using  
+`journalctl -et vaccinator`
+8. Create/edit a service provider login
+   - Run CockroachDB console using  
+   `cockroach sql --insecure`
+   - Run  
+   `use vaccinator;`  
+   to make the vaccinator database the default.
+   - Run  
+   `select * from dv.provider;`  
+   to get a list of the providers.
+9. Update the default entry with a password and allowed IPs like this:  
+`UPDATE dv.provider SET name='myName', password='myPassword' ip='192.168.1.10 127.0.0.1' WHERE providerid=1;`
+
 # License information
 DataVaccinator Vault is released as free software under the Affero GPL license (AGPL). You can redistribute it and/or modify it under the terms of this license which you can read by viewing the included agpl.txt or online at www.gnu.org/licenses/agpl.html
