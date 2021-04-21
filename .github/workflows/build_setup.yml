@@ -29,7 +29,7 @@ jobs:
       - name: Install Makeself
         run: |
           export DEBIAN_FRONTEND=noninteractive
-          apt-get -yq install makeself
+          sudo apt-get -yq install makeself
         
       # Compile DataVaccinator Setup
       - name: Compile DataVaccinator Setup
