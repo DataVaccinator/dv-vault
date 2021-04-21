@@ -23,8 +23,8 @@ All tests have to return like this (positive example result):
 ----
 Get version and check availability:
 - pass
-
 NOTE: Server supports 'search' module. We will test this, too.
+NOTE: Server supports 'publish' module. We will test this, too.
 
 Testing invalid requests (wrong data, missing data etc):
 - pass
@@ -34,13 +34,13 @@ Testing invalid requests (wrong data, missing data etc):
 - pass
 
 Testing to add data:
-NOTE: New user VID: cbd4f34a835752a14bb5f10aa71c2e7c
+NOTE: New user VID: 8111823e306f95b93f67559aa205b874
 - pass
 
 Testing to publish data:
 - pass
 - pass
-NOTE: New published user VID: 1e9592bdf2c6ccada8b7b2ab61f4bd37
+NOTE: New published user VID: 22eb8014df566c4ccceb2c0ec8109785
 - pass
 
 Tests updating data:
@@ -53,13 +53,17 @@ Tests retrieving data:
 - pass
 - pass
 
-Testing 'search' plugin function:
+Testing 'search' plugin functions:
+- pass
+- pass
+
+Testing 'publish' plugin functions:
 - pass
 - pass
 
 Cleanup vid's created:
-Removing vid [cbd4f34a835752a14bb5f10aa71c2e7c]... OK
-Removing vid [1e9592bdf2c6ccada8b7b2ab61f4bd37]... OK
+Removing vid [8111823e306f95b93f67559aa205b874]... OK
+Removing vid [22eb8014df566c4ccceb2c0ec8109785]... OK
 
 Done
 ----

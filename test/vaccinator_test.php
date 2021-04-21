@@ -383,7 +383,7 @@ while (true) {
             print "Expected status OK for 'getpublished' operation, got [".$j["status"]."] instead.\n";
             break;
         }
-        if ($j["data"][$vid]["data"] != false) {
+        if ($j["data"][$vidP]["data"] != false) {
             print "Expected data to be false for 'get' on published data, got [".$j["data"][$vid]["data"]."] instead.\n";
             break;
         }
