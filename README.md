@@ -21,8 +21,6 @@ This is the DataVaccinator Vault platform. It has to be installed on some Linux 
 
 * There is currently no web-gui for managing service providers.
 * Currently no support for ARM systems.
-* Currently no support for Windows Server.
-
 
 # What is it good for?
 The DataVaccinator Vault protects your sensitive data and information against abuse. At the very moment when data is being generated, the service splits that data and uses advanced pseudonymisation techniques to separate content from identity information. Thus, the DataVaccinator Vault reduces cyber security risks in the health, industry, finance and any other sector and helps service providers, device manufacturers, data generating and data handling parties to manage sensitive data in a secure and GDPR-compliant manner. In contrast to other offerings, DataVaccinator industrialises pseudonymisation, thereby making pseudonymisation replicable and affordable. 
