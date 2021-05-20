@@ -1,61 +1,64 @@
-# DataVaccinator Vault
+= DataVaccinator Vault
+:author: DataVaccinator Team
+:email: info@datavaccinator.com
+
 This is the DataVaccinator Vault platform. It has to be installed on some Linux environment in order to provide the service.
 
-## The DataVaccinator Vault platform offers
+== The DataVaccinator Vault platform offers
 
 * **Multi tenant use** (multiple service providers served on the same platform).
 * **Word based search** using searchable symmetric encryption techniques (SSE).
-* Can use [**Let's Encrypt** certificates](https://letsencrypt.org/) out of the box.
+* Can use link:https://letsencrypt.org/[**Let's Encrypt** certificates] out of the box.
 * Fully automatic **IP whitelisting** by only allowing API requests from dedicated IP addresses.
 * **Installer-Script** supports **CentOS**, **Red Hat**, **Arch Linux**, **Suse Linux**, **Ubuntu** and **Debian** systems (all x86_64).
 * Installer-Script automatically generates **SystemD daemon**, system user and group, database user and database structure.
-* DataVaccinator Vault supports working behind **proxy servers** and **loadbalancers** (like [HAProxy](http://www.haproxy.org/)).
-* It supports [**CORS**](https://fetch.spec.whatwg.org/#cors-protocol) to avoid issues with cross origin requests.
+* DataVaccinator Vault supports working behind **proxy servers** and **loadbalancers** (like link:http://www.haproxy.org/[HAProxy]).
+* It supports link:https://fetch.spec.whatwg.org/#cors-protocol[**CORS**] to avoid issues with cross origin requests.
 
-## It requires:
+== It requires:
 
 * Some **Linux** server (Intel/AMD, x86_64)
-* [**CockroachDB**](https://www.cockroachlabs.com/product) database and drivers
+* link:https://www.cockroachlabs.com/product[**CockroachDB**] database and drivers
 
-## What is missing:
+== What is missing:
 
-* There is currently no web-gui for managing service providers.
+* There is currently no web-gui for managing service providers (add/edit/delete).
 * Currently no support for ARM systems.
 * Currently no support for Windows Server.
 
 
-# What is it good for?
+== What is it good for?
 The DataVaccinator Vault protects your sensitive data and information against abuse. At the very moment when data is being generated, the service splits that data and uses advanced pseudonymisation techniques to separate content from identity information. Thus, the DataVaccinator Vault reduces cyber security risks in the health, industry, finance and any other sector and helps service providers, device manufacturers, data generating and data handling parties to manage sensitive data in a secure and GDPR-compliant manner. In contrast to other offerings, DataVaccinator industrialises pseudonymisation, thereby making pseudonymisation replicable and affordable. 
 
 Get more information, support and contact at <https://www.datavaccinator.com>.
 
-# Get started
+== Get started
 In order to run a DataVaccinator Vault, please follow this guide for installation on a dedicated Linux machine:
 
-1. Install [CockroachDB](https://www.cockroachlabs.com/product) on the machine.
+1. Install link:https://www.cockroachlabs.com/product[CockroachDB] on the machine.
 2. Download the DataVaccinator setup from setup/ folder to some temporary directory on your machine.
-3. Run it like this:  
-`sudo sh dv-vault-1.0.0_x86_64_setup.sh`
+3. Run it like this: +
++sudo sh dv-vault-1.0.0_x86_64_setup.sh+
 4. Follow the steps from the setup script.
-5. Edit the `conf.json` file to your needs. 
-   - By default it is located at `/etc/vaccinator/config.json` folder.
+5. Edit the +conf.json+ file to your needs. 
+   - By default it is located at +/etc/vaccinator/config.json+ folder.
    - Check the docs/vaccinator-config.adoc for details about the options.
-   - Remember to use `sudo` to edit this file.
-6. Start the service using  
-  `sudo systemctl start vaccinator`
-7. Control service start using  
-`journalctl -et vaccinator`
+   - Remember to use +sudo+ to edit this file.
+6. Start the service using +
+  +sudo systemctl start vaccinator+
+7. Control service start using +
++journalctl -et vaccinator+
 8. Create/edit a service provider login
-   - Run CockroachDB console using  
-   `cockroach sql --insecure`
-   - Run  
-   `use vaccinator;`  
+   - Run CockroachDB console using +
+   +cockroach sql --insecure+
+   - Run +
+   +use vaccinator;+ +
    to make the vaccinator database the default.
-   - Run  
-   `select * from dv.provider;`  
+   - Run +
+   +select * from dv.provider;+ +
    to get a list of the providers.
-9. Update the default entry with a password and allowed IPs like this:  
-`UPDATE dv.provider SET name='myName', password='myPassword' ip='192.168.1.10 127.0.0.1' WHERE providerid=1;`
+9. Update the default entry with a password and allowed IPs like this: +
++UPDATE dv.provider SET name='myName', password='myPassword' ip='192.168.1.10 127.0.0.1' WHERE providerid=1;+
 
-# License information
+== License information
 DataVaccinator Vault is released as free software under the Affero GPL license (AGPL). You can redistribute it and/or modify it under the terms of this license which you can read by viewing the included agpl.txt or online at www.gnu.org/licenses/agpl.html
