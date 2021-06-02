@@ -2,9 +2,9 @@
 :author: DataVaccinator Team
 :email: info@datavaccinator.com
 
-This folder contains a php script to verify the complete DataVaccinaor Vault API functionality.
+This folder contains php scripts to verify the complete DataVaccinaor Vault API functionality.
 
-== Run a test example
+== Run a protocol test
 The test script needs the url (and port) of the service to test. Call it like this:
 
 ----
@@ -67,3 +67,67 @@ Removing vid [22eb8014df566c4ccceb2c0ec8109785]... OK
 
 Done
 ----
+
+== Run a speed test
+
+This is an example call to measure the localhost system performance:
+
+----
+php perf_test.php 1 vaccinator http://localhost:8080 30 4
+----
+
+The above call will do a test with:
+
+* provider id *1*
+* provider password *vaccinator*
+* system at *localhost* port *8080*
+* running for *30* seconds
+* utilizing *4* instances
+
+Output:
+----
+Start client 0...
+Start client 1...
+Start client 2...
+Start client 3...
+Connection to http://localhost:8080/index.php is working.
+Duration: 31 sec
+Transactions: 209 (each create, retrieve and delete)
+Operations/sec: 20.225806451613
+
+Connection to http://localhost:8080/index.php is working.
+Duration: 31 sec
+Transactions: 211 (each create, retrieve and delete)
+Operations/sec: 20.41935483871
+
+Connection to http://localhost:8080/index.php is working.
+Duration: 31 sec
+Transactions: 224 (each create, retrieve and delete)
+Operations/sec: 21.677419354839
+
+Connection to http://localhost:8080/index.php is working.
+Duration: 31 sec
+Transactions: 223 (each create, retrieve and delete)
+Operations/sec: 21.58064516129
+
+Done
+----
+
+=== Interpretation of the results
+
+All the instances return their own metrics. To get the final metrics, you can add the values. In the above example, each instance did about 20 operations/sec. So the overall number of operations was 4 x ~20 = *~80 operations/sec*. Doing the exact calculation, it was *83.91 operations/sec* or *302K operations/hour*.
+
+[NOTE]
+====
+The above example was generated on a virtual machine (VBox):
+
+Operating System: KDE neon 5.19 +
+Kernel Version: 5.4.0-72-generic +
+OS Type: 64-bit +
+Processors: 2 × Intel® Core™ i5-7600K CPU @ 3.80GHz +
+Memory: 5,8 GiB of RAM +
+
+This machine was also running the connected single instance of Cockroach Database and the test script itself. ~50% of the system performance was utilized by Cockroach DB, ~20% by dv-vault executable.
+
+Please note that a production system with 4 CPU cores and 16GB of memory would do much more!
+====
