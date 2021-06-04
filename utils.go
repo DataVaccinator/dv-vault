@@ -5,11 +5,17 @@ import (
 	"encoding/hex"
 	"encoding/json"
 	"fmt"
+	"os/user"
 	"reflect"
 	"regexp"
 	"strconv"
 	"strings"
+	"syscall"
 	"time"
+
+	//#include <unistd.h>
+	//#include <errno.h>
+	"C"
 )
 
 // GetCurrentDateTime returns a string in the following format:
@@ -197,4 +203,30 @@ func ValidateSearchWord(vid string) bool {
 // It adds "ERROR:" in front of the message.
 func LogInternalf(message string, params ...interface{}) {
 	fmt.Printf("ERROR: "+message+"\n", params...)
+}
+
+// degradeMe tries to downgrade the privileges
+// of the process to run as given user only.
+func degradeMe(userName string) {
+	if syscall.Getuid() == 0 && userName != "" {
+		fmt.Printf("Running as root, downgrading to user %v...\n", userName)
+		user, err := user.Lookup(userName)
+		if err != nil {
+			fmt.Printf("⇨ User %v not found or other error: %v\n", userName, err)
+			return
+		}
+		uid, _ := strconv.ParseInt(user.Uid, 10, 32)
+		gid, _ := strconv.ParseInt(user.Gid, 10, 32)
+		cerr, errno := C.setgid(C.__gid_t(gid))
+		if cerr != 0 {
+			fmt.Printf("⇨ Unable to set GID due to error: %v\n", errno)
+			return
+		}
+		cerr, errno = C.setuid(C.__uid_t(uid))
+		if cerr != 0 {
+			fmt.Printf("⇨ Unable to set UID due to error: %v\n", errno)
+			return
+		}
+		fmt.Println("⇨ DONE")
+	}
 }

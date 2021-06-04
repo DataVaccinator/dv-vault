@@ -12,7 +12,7 @@ RestartPreventExitStatus=0
 StandardOutput=syslog
 StandardError=syslog
 SyslogIdentifier=vaccinator
-User=<USER>
+User=root
 
 [Install]
 WantedBy=default.target

@@ -24,6 +24,7 @@ import (
 	"os"
 	"strconv"
 	"strings"
+	"time"
 
 	"github.com/labstack/echo/v4"
 	"github.com/labstack/echo/v4/middleware"
@@ -50,6 +51,11 @@ func main() {
 	go cleanupHeartBeat() // start background task for DB cleanup
 
 	e := echo.New()
+
+	if cfg.Port < 1024 && cfg.RunAs != "" {
+		// start background task for degrading root privileges
+		go degradePrivileges(e, cfg.RunAs)
+	}
 
 	if cfg.DebugMode > 0 {
 		e.Debug = true
@@ -259,4 +265,14 @@ func generateError(c echo.Context, errorCode int, errorDesc string) error {
 		fmt.Printf("%v RETURN ERROR: %v\n", c.RealIP(), string(jRequest))
 	}
 	return c.String(httpType, string(jRequest))
+}
+
+// degradePrivileges waits for 5 seconds and tries to degrade
+// the user of this process to the given user level.
+// TODO: This is not the preferred method because we don't know
+//       if ports are already opened after 5 seconds. Help
+//       is requested by Echo team in their chat (VS 2021-06-04).
+func degradePrivileges(e *echo.Echo, userName string) {
+	time.Sleep(5 * time.Second)
+	degradeMe(userName)
 }

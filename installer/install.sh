@@ -54,6 +54,14 @@ then
 fi
 echo $dvpath
 
+echo -n "What IP is the database listening to (127.0.0.1): "
+read dvip
+if [ -z "$dvip" ]
+then
+    dvip="127.0.0.1"
+fi
+echo $dvip
+
 echo -n "What is the database user name to use (dv): "
 read dvuser
 if [ -z "$dvuser" ]
@@ -76,7 +84,7 @@ if sed -e"s|<USER>|$dvuser|g" "./database.sql" > "./database.tmp"
 then
     echo "OK"
     echo "Execute SQL database update script... "
-    if cockroach sql --insecure < "./database.tmp"
+    if cockroach sql --host $dvip --insecure < "./database.tmp"
     then
         echo "SQL script OK"
     else
@@ -89,25 +97,25 @@ fi
 
 echo "--------------------------- user creation"
 
-echo -n "Create a system user and group 'vaccinator' for running the vaccinator... ($DIST) "
+echo "Create a system user and group 'vaccinator' for running the vaccinator... ($DIST) "
 
 if [ "$DIST" = "ubuntu" -o "$DIST" = "debian" ]
 then
-    if ! adduser --system --no-create-home --group vaccinator
+    if ! adduser -D --system --no-create-home --group vaccinator
     then
-        echo "FAILED"
+        echo "FAILED user creation"
     fi
 elif [ "$DIST" = "centos" -o "$DIST" = "red hat" ]
 then
-    if ! adduser --system --no-create-home --gid vaccinator
+    if ! adduser --system --no-create-home vaccinator
     then
-        echo "FAILED"
+        echo "FAILED user creation"
     fi
 elif [ "$DIST" = "suse" -o "$DIST" = "arch" ]
 then
     if ! useradd -r -U -s /usr/bin/nologin vaccinator
     then
-        echo "FAILED"
+        echo "FAILED user creation"
     fi
 fi
 
@@ -139,8 +147,8 @@ echo -n "Copy vaccinator configuration file (config.json) to $dvpath... "
 if [ ! -f "$dvpath/config.json" ]; 
 then
 
-    configString="user=$dvuser host=localhost port=26257 dbname=vaccinator"
-    if sed -e"s|<PORT>|$dvport|g" -e"s|<CONN>|$configString|g" "./config.json" > "$dvpath/config.json"
+    configString="user=$dvuser host=$dvip port=26257 dbname=vaccinator"
+    if sed -e"s|<PORT>|$dvport|g" -e"s|<CONN>|$configString|g" -e"s|<USER>|vaccinator|g" "./config.json" > "$dvpath/config.json"
     then
         echo "OK"
         chown vaccinator:vaccinator "$dvpath/config.json"

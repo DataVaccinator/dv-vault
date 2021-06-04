@@ -7,5 +7,6 @@
     "debugMode": 0,
     "IPExtractor": "",
     "disableIPCheck": 0,
-    "CORSDomains": ""
+    "CORSDomains": "",
+    "runAs": "<USER>"
 }
