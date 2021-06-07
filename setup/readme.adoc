@@ -6,7 +6,7 @@
 
 This folder contains compiled setups, ready for distribution on Linux machines (Debian, Ubuntu, RedHAT, CentOS, Suse, Arch).
 
-Due to save space and prevent the repository from getting bigger and bigger, the setups are not pushed to repository.
+Due to save space and prevent the repository from getting bigger and bigger, the setups are not pushed to this repository.
 
 == Manual creation of setups
 
@@ -24,7 +24,7 @@ This deletes the temporary files needed for setup creation and all setups in "se
 
 == Run setups
 
-Run the downloaded setups like this
+Run the downloaded or created setups like this
 ----
 sudo sh dv-vault-1.0.0_x86_64_setup.sh
 ----

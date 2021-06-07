@@ -8,6 +8,7 @@ all: setup
 arch = $(shell uname -m)
 
 package: clean
+	go test
 	go build -ldflags "-X main.SERVER_VERSION=$(VERSION)" -o vaccinator
 	mv vaccinator ./installer/vaccinator
 	chmod +x ./installer/install.sh

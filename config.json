@@ -6,7 +6,7 @@
     "useLetsEncrypt": 0,
     "debugMode": 1,
     "IPExtractor": "",
-    "disableIPCheck": 0,
+    "disableIPCheck": 1,
     "CORSDomains": "*",
-    "runAs": "vaccinator"
+    "runAs": ""
 }
