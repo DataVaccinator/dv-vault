@@ -267,12 +267,15 @@ func generateError(c echo.Context, errorCode int, errorDesc string) error {
 	return c.String(httpType, string(jRequest))
 }
 
-// degradePrivileges waits for 5 seconds and tries to degrade
-// the user of this process to the given user level.
-// TODO: This is not the preferred method because we don't know
-//       if ports are already opened after 5 seconds. Help
-//       is requested by Echo team in their chat (VS 2021-06-04).
+// degradePrivileges waits until ListenerAddr is set and then
+// tries to degrade the user of this process to the given user.
 func degradePrivileges(e *echo.Echo, userName string) {
-	time.Sleep(5 * time.Second)
-	degradeMe(userName)
+	for {
+		adr := e.ListenerAddr()
+		if adr != nil {
+			degradeMe(userName)
+			break
+		}
+		time.Sleep(100 * time.Millisecond)
+	}
 }
