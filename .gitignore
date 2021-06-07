@@ -3,3 +3,4 @@
 /.vscode
 /certs
 __debug_bin
+/setup/*.sh
