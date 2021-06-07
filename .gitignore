@@ -1,4 +1,5 @@
 *.code-workspace
+*.tmp
 /.vscode
 /certs
 __debug_bin
