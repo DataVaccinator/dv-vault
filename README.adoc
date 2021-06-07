@@ -9,16 +9,24 @@ This is the DataVaccinator Vault platform. It has to be installed on some Linux 
 * **Multi tenant use** (multiple service providers served on the same platform).
 * **Word based search** using searchable symmetric encryption techniques (SSE).
 * Can use link:https://letsencrypt.org/[**Let's Encrypt** certificates] out of the box.
-* Fully automatic **IP whitelisting** by only allowing API requests from dedicated IP addresses.
-* **Installer-Script** supports **CentOS**, **Red Hat**, **Arch Linux**, **Suse Linux**, **Ubuntu** and **Debian** systems (all x86_64).
-* Installer-Script automatically generates **SystemD daemon**, system user and group, database user and database structure.
+* Fully automatic **IP whitelisting** by only serving API requests from dedicated IP addresses.
 * DataVaccinator Vault supports working behind **proxy servers** and **loadbalancers** (like link:http://www.haproxy.org/[HAProxy]).
 * It supports link:https://fetch.spec.whatwg.org/#cors-protocol[**CORS**] to avoid issues with cross origin requests.
+* **Installer-Script** supports **CentOS**, **Red Hat**, **Arch Linux**, **Suse Linux**, **Ubuntu** and **Debian** systems (all x86_64).
+* Installer-Script automatically generates **systemd daemon**, system user and group, database user and database structure.
 
-== It requires:
+== It requires (for execution):
 
 * Some **Linux** server (Intel/AMD, x86_64)
 * link:https://www.cockroachlabs.com/product[**CockroachDB**] database and drivers
+
+== It requires (for development):
+
+* Some **Linux** server (Intel/AMD, x86_64)
+* link:https://www.cockroachlabs.com/product[**CockroachDB**] database and drivers
+* **go** compiler (1.16 or higher)
+* **php 7** (for migration tool and test scripts)
+* Preferable some IDE (like link:https://code.visualstudio.com/[VSCode], link:https://atom.io/[Atom], link:https://github.com/fatih/vim-go[VIM-GO] or link:http://liteide.org/[LiteIDE])
 
 == What is missing:
 
@@ -59,4 +67,4 @@ In order to run a DataVaccinator Vault, please follow this guide for installatio
    `UPDATE dv.provider SET name='myName', password='myPassword' ip='192.168.1.10 127.0.0.1' WHERE providerid=1;`
 
 == License information
-DataVaccinator Vault is released as free software under the Affero GPL license (AGPL). You can redistribute it and/or modify it under the terms of this license which you can read by viewing the included agpl.txt or online at www.gnu.org/licenses/agpl.html
+DataVaccinator Vault is released as free software under the Affero GPL license (AGPL). You can redistribute it and/or modify it under the terms of this license which you can read by viewing the included LICENSE file or online at www.gnu.org/licenses/agpl.html
