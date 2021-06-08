@@ -41,5 +41,11 @@ CREATE TABLE IF NOT EXISTS dv.audit (
   PRIMARY KEY (ID)
 );
 
+CREATE TABLE IF NOT EXISTS dv.nodes (
+  NODEID INT NOT NULL,
+  LASTACTIVITY TIMESTAMPTZ NOT NULL,
+  PRIMARY KEY (NODEID)
+);
+
 INSERT INTO dv.provider (providerid, name, password, ip, creationdate) 
   VALUES(1, 'test', 'vaccinator', '127.0.0.1', now());

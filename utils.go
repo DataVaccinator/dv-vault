@@ -17,7 +17,10 @@ import (
 	//#include <errno.h>
 	"C"
 )
-import "os"
+import (
+	"net"
+	"os"
+)
 
 // GetCurrentDateTime returns a string in the following format:
 // "YYYY-MM-DD HH-MM-SS"
@@ -252,4 +255,19 @@ func chown(folderOrFile string, userName string) bool {
 	}
 	fmt.Println("⇨ DONE")
 	return true
+}
+
+// GetOutboundIP determines the IP address your program is using
+// for internet traffic.
+func GetOutboundIP() net.IP {
+	conn, err := net.Dial("udp", "8.8.8.8:80")
+	if err != nil {
+		LogInternalf("Failed getting my own IP address: %v", err)
+		return nil
+	}
+	defer conn.Close()
+
+	localAddr := conn.LocalAddr().(*net.UDPAddr)
+
+	return localAddr.IP
 }
