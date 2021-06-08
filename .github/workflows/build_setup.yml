@@ -24,7 +24,7 @@ jobs:
       - name: Compile DataVaccinator Setup
         run: make VERSION=1.0.0
 
-      - name: Check-in DataVaccinator Vault Setup
+      #- name: Check-in DataVaccinator Vault Setup
         #run: |
         #  git config --global user.email "build@datavaccinator.com"
         #  git config --global user.name "GitHub Automatic Build"
