@@ -77,6 +77,11 @@ then
     dvport="443"
 fi
 echo $dvport
+useSSL="0"
+if [ $dvport = "443" ]
+then
+    useSSL="1"
+fi
 
 echo "--------------------------- database creation"
 echo -n "Prepare SQL database update script... "
@@ -101,7 +106,7 @@ echo "Create a system user and group 'vaccinator' for running the vaccinator... 
 
 if [ "$DIST" = "ubuntu" -o "$DIST" = "debian" ]
 then
-    if ! adduser -D --system --no-create-home --group vaccinator
+    if ! adduser --system --no-create-home --group vaccinator
     then
         echo "FAILED user creation"
     fi
@@ -148,7 +153,12 @@ if [ ! -f "$dvpath/config.json" ];
 then
 
     configString="user=$dvuser host=$dvip port=26257 dbname=vaccinator"
-    if sed -e"s|<PORT>|$dvport|g" -e"s|<CONN>|$configString|g" -e"s|<USER>|vaccinator|g" "./config.json" > "$dvpath/config.json"
+    if sed -e"s|<PORT>|$dvport|g" \
+           -e"s|<CONN>|$configString|g" \
+           -e"s|<CERTS>|$dvpath/certs/|g" \
+           -e"s|<USER>|vaccinator|g" \
+           -e"s|<USESSL>|$useSSL|g" \
+           "./config.json" > "$dvpath/config.json"
     then
         echo "OK"
         chown vaccinator:vaccinator "$dvpath/config.json"

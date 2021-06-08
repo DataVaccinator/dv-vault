@@ -17,6 +17,7 @@ type Configuration struct {
 	DisableIPCheck   int    `json:"disableIPCheck"`
 	CORSDomains      string `json:"CORSDomains"`
 	RunAs            string `json:"runAs"`
+	CertFolder       string `json:"certFolder"`
 }
 
 var cfg Configuration

@@ -17,6 +17,7 @@ import (
 	//#include <errno.h>
 	"C"
 )
+import "os"
 
 // GetCurrentDateTime returns a string in the following format:
 // "YYYY-MM-DD HH-MM-SS"
@@ -229,4 +230,26 @@ func degradeMe(userName string) {
 		}
 		fmt.Println("⇨ DONE")
 	}
+}
+
+// chown tries to set the ownership of a file or folder to the
+// given user (must exist).
+func chown(folderOrFile string, userName string) bool {
+	fmt.Printf("Chown folder [%v] to user [%v]...\n", folderOrFile, userName)
+
+	user, err := user.Lookup(userName)
+	if err != nil {
+		fmt.Printf("⇨ User %v not found or other error: %v\n", userName, err)
+		return false
+	}
+
+	uid, _ := strconv.Atoi(user.Uid)
+	gid, _ := strconv.Atoi(user.Gid)
+	err = os.Chown(folderOrFile, uid, gid)
+	if err != nil {
+		fmt.Printf("⇨ Chown failed with error: %v\n", err)
+		return false
+	}
+	fmt.Println("⇨ DONE")
+	return true
 }

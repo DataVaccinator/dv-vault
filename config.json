@@ -4,6 +4,7 @@
     "listenIP": "",
     "listenPort": 8080,
     "useLetsEncrypt": 0,
+    "certFolder": "",
     "debugMode": 1,
     "IPExtractor": "",
     "disableIPCheck": 1,

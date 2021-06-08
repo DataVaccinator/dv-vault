@@ -22,6 +22,7 @@ import (
 	"fmt"
 	"net/http"
 	"os"
+	"path/filepath"
 	"strconv"
 	"strings"
 	"time"
@@ -78,14 +79,28 @@ func main() {
 
 	if cfg.LetsEncrypt > 0 {
 		// Prepare Let's Encrypt usage (echo framework)
-		if _, err := os.Stat("certs/"); os.IsNotExist(err) {
-			// certs/ folder does not exists. Create it...
-			err := os.Mkdir("certs/", 0755)
+		folder := cfg.CertFolder
+		if folder == "" {
+			folder = "certs" // Use default for saving certs
+		}
+		// Ensure last slash, make path absolute
+		folder = filepath.Clean(folder) + "/"
+		// Check if it exists. Create if needed.
+		if _, err := os.Stat(folder); os.IsNotExist(err) {
+			// Given certs folder does not exist. Create it...
+			fmt.Printf("Create missing certificate folder [%v]...\n", folder)
+			err := os.Mkdir(folder, 0770) // 'rwxrwx---'
 			if err != nil {
-				panic("Can not create certs/ directory. Check permissions!")
+				panic("Can not create certs directory at [" + folder + "]. Check permissions!")
+			}
+			fmt.Println("⇨ DONE")
+			if cfg.RunAs != "" {
+				if chown(folder, cfg.RunAs) == false {
+					panic("Failed chown on [" + folder + "]. Check permissions!")
+				}
 			}
 		}
-		e.AutoTLSManager.Cache = autocert.DirCache("certs/")
+		e.AutoTLSManager.Cache = autocert.DirCache(folder)
 	}
 
 	if cfg.DisableIPCheck != 0 {
