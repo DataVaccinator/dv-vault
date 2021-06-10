@@ -117,6 +117,19 @@ func main() {
 		fmt.Printf("NOTE: Enabled CORS domains for \"%v\"\n", cfg.CORSDomains)
 	}
 
+	e.Use(func(next echo.HandlerFunc) echo.HandlerFunc {
+		return func(c echo.Context) error {
+			c.Response().Header().Add("Strict-Transport-Security", "max-age=63072000; includeSubdomains; preload")
+			c.Response().Header().Add("X-XSS-Protection", "1; mode=block")
+			c.Response().Header().Add("X-Frame-Options", "SAMEORIGIN")
+			c.Response().Header().Add("X-Content-Type-Options", "nosniff")
+			c.Response().Header().Add("Cache-Control", "max-age=0, no-cache, no-store, must-revalidate")
+			c.Response().Header().Add("Pragma", "no-cache")
+			c.Response().Header().Add("Server", "dv-vault")
+			return next(c)
+		}
+	})
+
 	e.HideBanner = true // hide the echo framework banner during start
 	e.GET("/", func(c echo.Context) error {
 		return c.String(http.StatusOK,
