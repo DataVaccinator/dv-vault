@@ -45,9 +45,9 @@ func main() {
 	fmt.Println("")
 	fmt.Println("Starting DataVaccinator Vault server V" + SERVER_VERSION)
 
-	LoadConfig() // stores it in global configuration object
+	loadConfig() // stores it in global configuration object
 
-	InitDatabase() // assign global DB object here
+	initDatabase() // assign global DB object here
 
 	go cleanupHeartBeat() // start background task for DB cleanup
 

@@ -22,7 +22,7 @@ type Configuration struct {
 
 var cfg Configuration
 
-func LoadConfig() {
+func loadConfig() {
 	fmt.Print("Open config.json… ")
 	file, err := os.Open("config.json")
 	if err != nil {

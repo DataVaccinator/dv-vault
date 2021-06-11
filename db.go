@@ -23,7 +23,7 @@ import (
 
 var DB *pgx.ConnPool
 
-func InitDatabase() bool {
+func initDatabase() bool {
 
 	fmt.Print("Connect CockroachDB… ")
 
