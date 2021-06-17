@@ -68,6 +68,11 @@ func initDatabase() bool {
 	return true
 }
 
+// shutdownDatabase closes all database connections for clean shutdown
+func shutdownDatabase() {
+	DB.Close()
+}
+
 // cleanupHeartBeat is called async to find and delete expired
 // published entries in the database every hour.
 //

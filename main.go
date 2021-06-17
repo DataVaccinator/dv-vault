@@ -22,9 +22,11 @@ import (
 	"fmt"
 	"net/http"
 	"os"
+	"os/signal"
 	"path/filepath"
 	"strconv"
 	"strings"
+	"syscall"
 	"time"
 
 	"github.com/labstack/echo/v4"
@@ -33,6 +35,8 @@ import (
 )
 
 var SERVER_VERSION string
+
+var e *echo.Echo
 
 func main() {
 	if SERVER_VERSION == "" {
@@ -51,7 +55,17 @@ func main() {
 
 	go cleanupHeartBeat() // start background task for DB cleanup
 
-	e := echo.New()
+	// handle OS signals
+	c := make(chan os.Signal, 1)
+	signal.Notify(c, os.Interrupt, syscall.SIGTERM)
+	go func() {
+		<-c
+		cleanupDV()
+		os.Exit(0)
+	}()
+
+	// create echo framework handle
+	e = echo.New()
 
 	if cfg.Port < 1024 && cfg.RunAs != "" {
 		// start background task for degrading root privileges
@@ -151,7 +165,7 @@ func main() {
 	e.POST("/", protocolHandler)          // bind protocol handler
 	e.POST("/index.php", protocolHandler) // bind protocol handler (legacy)
 
-	DoLog(LOG_TYPE_ERROR, 0, "Started service")
+	DoLog(LOG_TYPE_NOTICE, 0, "Started service")
 
 	var sErr error
 	if cfg.LetsEncrypt > 0 {
@@ -160,7 +174,7 @@ func main() {
 		sErr = e.Start(cfg.IP + ":" + strconv.Itoa(cfg.Port))
 	}
 	if sErr != nil {
-		fmt.Printf("ERROR: %v\n", sErr)
+		fmt.Printf("%v\n", sErr)
 	}
 }
 
@@ -306,4 +320,14 @@ func degradePrivileges(e *echo.Echo, userName string) {
 		}
 		time.Sleep(100 * time.Millisecond)
 	}
+}
+
+// cleanupDV provides a clean shutdown of this tool
+func cleanupDV() {
+	DoLog(LOG_TYPE_NOTICE, 0, "Received stop signal. Stopping service.")
+	err := e.Close() // close echo framework (net connections)
+	if err != nil {
+		fmt.Printf("Failed closing network connections. [%v]\n", err)
+	}
+	shutdownDatabase() // close database handles
 }

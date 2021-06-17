@@ -14,6 +14,7 @@ const (
 	LOG_TYPE_DELETE  = 3
 	LOG_TYPE_PUBLISH = 4
 	LOG_TYPE_ERROR   = 9
+	LOG_TYPE_NOTICE  = 10
 )
 
 // DoLog creates an entry in the audit table.
