@@ -4,9 +4,13 @@
 
 {empty}
 
-This folder contains compiled setups, ready for distribution on Linux machines (Debian, Ubuntu, RedHAT, CentOS, Suse, Arch).
+This folder contains the compiled setup, ready for distribution on Linux machines (Debian, Ubuntu, RedHAT, CentOS, Suse, Arch). It is placed here by the Makefile. 
 
 Due to save space and prevent the repository from getting bigger and bigger, the setups are not pushed to this repository.
+
+You can find the latest build here:
+
+https://github.com/Kukulkano/dv-vault/releases/tag/release
 
 == Manual creation of setups
 
