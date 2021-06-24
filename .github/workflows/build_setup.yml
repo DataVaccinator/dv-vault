@@ -2,9 +2,9 @@ name: Build Setup File
 
 # Controls when the action will run. 
 on:
-
-  # Currently only manual triggers
-  workflow_dispatch:
+  push:
+    branches:
+      - master
 
 jobs:
   
@@ -24,9 +24,30 @@ jobs:
       - name: Compile DataVaccinator Setup
         run: make VERSION=1.0.0
         
-      - name: Release
+      # Removes the latest release, so that we can create a new one in its place
+      - name: Delete latest release
+        uses: ame-yu/action-delete-latest-release@v2
+        with:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      # (optional) Removes the tag associated with the latest release
+      - name: Delete release tag
+        run: |
+          git tag -d release
+          git push origin :release
+        continue-on-error: true # in case there's no existing release
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      # Creates the new release with the binary as a release asset.
+      # If the previous Action was skipped, then this keeps the same tag as the
+      # previous release.
+      - name: Create new release
         uses: softprops/action-gh-release@v1
         with:
+          body: "Release notes"
+          name: Latest
+          tag_name: release
           files: ./setup/dv-vault-*_setup.sh
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
