@@ -30,7 +30,7 @@ This is the DataVaccinator Vault platform. It has to be installed on some Linux 
 
 == What is missing:
 
-* There is currently no web-gui for managing service providers (add/edit/delete).
+* There is currently gui or comandline options for managing service providers (add/edit/delete).
 * Currently no support for ARM systems.
 
 == What is it good for?
@@ -42,7 +42,7 @@ Get more information, support and contact at <https://www.datavaccinator.com>.
 In order to run a DataVaccinator Vault, please follow this guide for installation on a dedicated Linux machine:
 
 1. Install link:https://www.cockroachlabs.com/product[CockroachDB] on the machine.
-2. Download the DataVaccinator setup from setup/ folder to some temporary directory on your machine.
+2. Download the latest DataVaccinator setup (...setup.sh) from link:https://github.com/Kukulkano/dv-vault/releases/tag/release[GitHub releases page] to some temporary directory on your machine.
 3. Run it like this: +
    `sudo sh dv-vault-1.0.0_x86_64_setup.sh`
 4. Follow the steps from the setup script.
