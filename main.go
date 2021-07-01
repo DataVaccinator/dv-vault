@@ -17,6 +17,7 @@ package main
 +--------------------------------------------------------*/
 
 import (
+	"crypto/tls"
 	"encoding/json"
 	"errors"
 	"fmt"
@@ -31,6 +32,7 @@ import (
 
 	"github.com/labstack/echo/v4"
 	"github.com/labstack/echo/v4/middleware"
+	"golang.org/x/crypto/acme"
 	"golang.org/x/crypto/acme/autocert"
 )
 
@@ -91,9 +93,10 @@ func main() {
 		e.IPExtractor = echo.ExtractIPDirect()
 	}
 
+	folder := ""
 	if cfg.LetsEncrypt > 0 {
 		// Prepare Let's Encrypt usage (echo framework)
-		folder := cfg.CertFolder
+		folder = cfg.CertFolder
 		if folder == "" {
 			folder = "certs" // Use default for saving certs
 		}
@@ -114,7 +117,7 @@ func main() {
 				}
 			}
 		}
-		e.AutoTLSManager.Cache = autocert.DirCache(folder)
+		// e.AutoTLSManager.Cache = autocert.DirCache(folder)
 	}
 
 	if cfg.DisableIPCheck != 0 {
@@ -169,7 +172,22 @@ func main() {
 
 	var sErr error
 	if cfg.LetsEncrypt > 0 {
-		sErr = e.StartAutoTLS(cfg.IP + ":" + strconv.Itoa(cfg.Port))
+		autoTLSManager := autocert.Manager{
+			Prompt: autocert.AcceptTOS,
+			// Cache certificates to avoid issues with rate limits
+			Cache: autocert.DirCache(folder),
+		}
+		s := http.Server{
+			Addr:    cfg.IP + ":" + strconv.Itoa(cfg.Port),
+			Handler: e, // set Echo as handler
+			TLSConfig: &tls.Config{
+				//Certificates: nil, // <-- s.ListenAndServeTLS will populate this field
+				GetCertificate: autoTLSManager.GetCertificate,
+				NextProtos:     []string{acme.ALPNProto},
+				MinVersion:     tls.VersionTLS13,
+			},
+		}
+		sErr = s.ListenAndServeTLS("", "")
 	} else {
 		sErr = e.Start(cfg.IP + ":" + strconv.Itoa(cfg.Port))
 	}
