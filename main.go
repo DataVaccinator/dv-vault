@@ -39,6 +39,7 @@ import (
 var SERVER_VERSION string
 
 var e *echo.Echo
+var s http.Server
 
 func main() {
 	if SERVER_VERSION == "" {
@@ -93,31 +94,30 @@ func main() {
 		e.IPExtractor = echo.ExtractIPDirect()
 	}
 
-	folder := ""
+	certsFolder := ""
 	if cfg.LetsEncrypt > 0 {
 		// Prepare Let's Encrypt usage (echo framework)
-		folder = cfg.CertFolder
-		if folder == "" {
-			folder = "certs" // Use default for saving certs
+		certsFolder = cfg.CertFolder
+		if certsFolder == "" {
+			certsFolder = "certs" // Use default for saving certs
 		}
 		// Ensure last slash, make path absolute
-		folder = filepath.Clean(folder) + "/"
+		certsFolder = filepath.Clean(certsFolder) + "/"
 		// Check if it exists. Create if needed.
-		if _, err := os.Stat(folder); os.IsNotExist(err) {
+		if _, err := os.Stat(certsFolder); os.IsNotExist(err) {
 			// Given certs folder does not exist. Create it...
-			fmt.Printf("Create missing certificate folder [%v]...\n", folder)
-			err := os.Mkdir(folder, 0770) // 'rwxrwx---'
+			fmt.Printf("Create missing certificate folder [%v]...\n", certsFolder)
+			err := os.Mkdir(certsFolder, 0770) // 'rwxrwx---'
 			if err != nil {
-				panic("Can not create certs directory at [" + folder + "]. Check permissions!")
+				panic("Can not create certs directory at [" + certsFolder + "]. Check permissions!")
 			}
 			fmt.Println("⇨ DONE")
 			if cfg.RunAs != "" {
-				if chown(folder, cfg.RunAs) == false {
-					panic("Failed chown on [" + folder + "]. Check permissions!")
+				if chown(certsFolder, cfg.RunAs) == false {
+					panic("Failed chown on [" + certsFolder + "]. Check permissions!")
 				}
 			}
 		}
-		// e.AutoTLSManager.Cache = autocert.DirCache(folder)
 	}
 
 	if cfg.DisableIPCheck != 0 {
@@ -170,26 +170,30 @@ func main() {
 
 	DoLog(LOG_TYPE_NOTICE, 0, "Started service")
 
+	serverAddress := cfg.IP + ":" + strconv.Itoa(cfg.Port)
 	var sErr error
 	if cfg.LetsEncrypt > 0 {
+		// use own TLS server because echo standard uses TLS 1.0 and 1.2 and
+		// allows usage of unsecure ciphers
 		autoTLSManager := autocert.Manager{
 			Prompt: autocert.AcceptTOS,
 			// Cache certificates to avoid issues with rate limits
-			Cache: autocert.DirCache(folder),
+			Cache: autocert.DirCache(certsFolder),
 		}
-		s := http.Server{
-			Addr:    cfg.IP + ":" + strconv.Itoa(cfg.Port),
+		// generate server with minimum TLS 1.3, using autocert.Manager
+		s = http.Server{
+			Addr:    serverAddress,
 			Handler: e, // set Echo as handler
 			TLSConfig: &tls.Config{
-				//Certificates: nil, // <-- s.ListenAndServeTLS will populate this field
 				GetCertificate: autoTLSManager.GetCertificate,
 				NextProtos:     []string{acme.ALPNProto},
 				MinVersion:     tls.VersionTLS13,
 			},
 		}
+		fmt.Println("Start TLS service on " + serverAddress)
 		sErr = s.ListenAndServeTLS("", "")
 	} else {
-		sErr = e.Start(cfg.IP + ":" + strconv.Itoa(cfg.Port))
+		sErr = e.Start(serverAddress)
 	}
 	if sErr != nil {
 		fmt.Printf("%v\n", sErr)
@@ -343,9 +347,16 @@ func degradePrivileges(e *echo.Echo, userName string) {
 // cleanupDV provides a clean shutdown of this tool
 func cleanupDV() {
 	DoLog(LOG_TYPE_NOTICE, 0, "Received stop signal. Stopping service.")
+	if s.Handler != nil {
+		err := s.Close() // close TLS framework (net connections)
+		if err != nil {
+			fmt.Printf("Failed closing TLS network connections. [%v]\n", err)
+		}
+	}
 	err := e.Close() // close echo framework (net connections)
 	if err != nil {
-		fmt.Printf("Failed closing network connections. [%v]\n", err)
+		fmt.Printf("Failed closing echo network connections. [%v]\n", err)
 	}
 	shutdownDatabase() // close database handles
+	fmt.Println("DataVaccinator stopped regularily")
 }
