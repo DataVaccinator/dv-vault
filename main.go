@@ -180,17 +180,29 @@ func main() {
 			// Cache certificates to avoid issues with rate limits
 			Cache: autocert.DirCache(certsFolder),
 		}
-		// generate server with minimum TLS 1.3, using autocert.Manager
+		// generate server with TLS 1.2 and TLS1.3, using autocert.Manager
+		// this algorithms and ciphers ended in an A+ rating from SSLLabs
+		// test at https://www.ssllabs.com/ssltest/ (07/2021)
 		s = http.Server{
 			Addr:    serverAddress,
 			Handler: e, // set Echo as handler
 			TLSConfig: &tls.Config{
 				GetCertificate: autoTLSManager.GetCertificate,
 				NextProtos:     []string{acme.ALPNProto},
-				MinVersion:     tls.VersionTLS13,
+				MinVersion:     tls.VersionTLS12,
+				CipherSuites: []uint16{
+					tls.TLS_ECDHE_RSA_WITH_AES_128_GCM_SHA256,
+					tls.TLS_ECDHE_ECDSA_WITH_AES_128_GCM_SHA256,
+					tls.TLS_ECDHE_RSA_WITH_AES_128_CBC_SHA,
+					tls.TLS_ECDHE_ECDSA_WITH_AES_128_CBC_SHA,
+					tls.TLS_ECDHE_RSA_WITH_AES_256_CBC_SHA,
+					tls.TLS_ECDHE_ECDSA_WITH_AES_256_CBC_SHA,
+					tls.TLS_RSA_WITH_AES_128_CBC_SHA,
+					tls.TLS_RSA_WITH_AES_256_CBC_SHA,
+				},
 			},
 		}
-		fmt.Println("Start TLS service on " + serverAddress)
+		fmt.Println("⇨ https server started on " + serverAddress)
 		sErr = s.ListenAndServeTLS("", "")
 	} else {
 		sErr = e.Start(serverAddress)

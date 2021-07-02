@@ -34,7 +34,7 @@ func DoLog(logType int, provId int, message string) {
 	if err != nil {
 		var pge pgx.PgError
 		errors.As(err, &pge) // need to cast to get error codes
-		fmt.Printf("WARNING: Failed to insert to log table!\nError: '%v' (%v)",
+		fmt.Printf("WARNING: Failed to insert to log table!\nError: '%v' (%v)\n",
 			pge.Message, pge.Code)
 	}
 }
