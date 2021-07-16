@@ -12,14 +12,14 @@ endif::[]
 
 == Foreword
 
-The data vaccinator enables developers to easily implement pseudonymisation into their own projects. The drawback of many pseudonymisation solutions is the missing search functionality. It is not possible to search for pseudonymized data inside DataVaccinator Vault because the payloads are encrypted and encrypted data can not get searched for. By this, the use-cases are limited to projects where this is not mandatory.
+The data vaccinator enables developers to easily implement pseudonymisation into their own projects. The drawback of many pseudonymisation solutions is the missing search functionality. It is not possible to search for pseudonymized data inside DataVaccinator Vault by default, because the payloads are encrypted and encrypted data can not get searched for. By this, the use-cases would be very limited to projects where this is not mandatory.
 
-Many solutions need at least partial unencrypted data on the service storage to provide search functionality. There are several documents and even solutions in the market that work like this. We do not want to accept readable data inside of the DataVaccinator servers. Not even temporarily.
+Many solutions need at least partial unencrypted data on the service storage to provide search functionality. There are several solutions in the market that work like this. We do not want to accept readable data inside of the DataVaccinator servers. Not even temporarily.
 Thus, we looked for an option that prevents such drawbacks and avoids plain text information at all.
 
-Another alternative is SSE (Searchable Symmetric Encryption). This concept was target for several dissertations and scientific research and mainly focusses on searching in whole documents (full-text search) and also represents cases for multi-user environments. So these concepts were not applicable for the DataVaccinator.
+Another alternative we found is SSE (Searchable Symmetric Encryption). This concept was target for several dissertations and scientific research and mainly focusses on searching in whole documents (full-text search) and also represents cases for multi-user environments. So these concepts were not applicable for the DataVaccinator. At least, not for the moment.
 
-The new DataVaccinator SearchHash algorithm offers a limited search by using the local app-id (key) together with hashing functions. Sadly,  nothing comes without cost and a later chapter covers the security implications and, finally, every developer is free in his choice to use this feature or not.
+The new DataVaccinator SearchHash algorithm offers a limited search functionality by using the local app-id (key) together with hashing functions. Sadly,  nothing comes without cost and a later chapter covers the security implications and, finally, every developer is free in his choice to use this feature or not.
 
 == The SearchHash
 
@@ -43,9 +43,9 @@ There can be *optional additional randomization* by adding zero to n additional 
 
 === Example
 
-Searchword = *FooBar* and used key = *1234*
+Searchword=*FooBar*, used key=*1234* and used hash algorith is *SHA1*
 
-NOTE: To keep it shorter in the examples, we only used SHA1 and init with "cbb10913b2445cc225b4fb81580a6d02e6ae3d42".
+NOTE: To keep it shorter in the examples, we only use SHA1 and init with "cbb10913b2445cc225b4fb81580a6d02e6ae3d42".
 The real life implementation is working with SHA256 and initializes with "f1748e9819664b324ae079a9ef22e33e9014ffce302561b9bf71a37916c1d2a3".
 ****
 h^1^ = SHA1("f" + "cbb10913b2445cc225b4fb81580a6d02e6ae3d42" + "1234") \=> **e3**5fd1a67cd6dc5f657c7d34b3290eadb08cd965
@@ -83,19 +83,19 @@ The above is a final and usable SearchHash. For generation of the SearchHashes, 
 
 == Searching
 
-For searching, the same applies for the word to search. First, you calculate the SearchHash (without randomization) for the text you like to search. For *foo*  it is *cb582b*. You simply provide this to the DataVaccinator service and it  will do a _like_ query to the database of SearchHashes like *cb582b%*,  returning all VIDs that contain searchwords starting with this specific sequence.
+For searching, the same algorithm applies for the word to search. First, you calculate the SearchHash (without randomization) for the text you like to search. For *foo*  it is *cb582b* (with above example values and hash algorithm). You simply provide this to the DataVaccinator Vault service and it  will do a _like_ query to the database of SearchHashes like *cb582b%*, returning all VIDs that contain searchwords starting with this specific sequence.
 
 == Security Considerations
 
 The representation of the SearchHashes is not without affecting security. The main goal of DataVaccinator is to protect the data from being assignable to people or leaking the payload.
 
-* The worst case would be to retrieve the app-id (key) from that data. By this, the payloads may get decrypted and assignment to other data may become possible.
-* The second case would be to assign the user FooBar to a PID inside the DataVaccinator database. But without the knowledge of the app-id (key) the data is still protected.
+* The *worst case* would be to retrieve the app-id (key) from that data. By this, the payloads may get decrypted and assignment to other data may become possible.
+* *Another case* would be to assign the user FooBar to a PID inside the DataVaccinator database. But without the knowledge of the app-id (key) the rest of the PID data is still protected.
 
-At first, we consider it very unlikely that someone is able to restore the app-id (key) from this information. This would mean to do a bruteforce attack on unknown data.
+At first, we consider it very unlikely that someone is able to restore the app-id (key) from this information. This would mean to do a bruteforce attack on unknown data. We cannot rule out the possibility that there is still an attack vector that also makes it possible to unmask the key. This might become a topic for further research.
 
 So let's have a look onto the data stored, assuming we only have data from one party in the database (all hashed/encrypted with the same app-id).
 
-All users with a last name like "Footer", "Foomalin", "FooManChu" or "FooTiger" will have a SearchHash that starts with _e38db3_. On a first look this sounds terrible. But in fact, someone who does not know the app-id, does only know that the three people share a last name with the same first three letters. But it is unknown what letters this are. It may be "Sch" like in Schmid or "Pro" like in Proske. So this is just a small indicator but no leak.
+All users with a last name like "Footer", "Foomalin", "FooManChu" or "FooTiger" will have a SearchHash that starts with _e38db3_ (with above example values and hash algorithm). On a first look this sounds terrible. But in fact, someone who does not know the app-id, does only know that the three people share a last name with the same first three letters. But it is unknown what letters this are. It may be "Sch" like in Schmid or "Pro" like in Proske. So this is just a small indicator but no leak.
 
-Someone may say that the risk of a statistical analysis and attack is likely on such data and we can not deny. There is the possibility that statistics may lead to some attack vector. By this, we mean the possibly that a set of payloads is then assigned to some word or name. Like in "payload PID 88776633 is assigned to someone who's name is FooManChu". But please note that the payloads are still  encrypted by the app-id. Without knowing that, it is still considered secure.
+Someone may say that the risk of a statistical analysis and attack is likely on such data and we can not deny. There is the possibility that statistics may lead to some attack vector. By this, we mean the possibly that a set of payloads is then assigned to some word or name, in complete or partial. Like in "payload PID 88776633 is assigned to someone who's name is FooManChu". But please note that the payloads are still encrypted by the app-id. Without knowing that, we still consider the PID as secure.
