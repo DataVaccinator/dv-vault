@@ -59,7 +59,7 @@ func initDatabase() bool {
 
 	// Check the connection
 	var w int
-	row := DB.QueryRow("SELECT COUNT(*) FROM dv.provider").Scan(&w)
+	row := DB.QueryRow("SELECT COUNT(*) FROM provider").Scan(&w)
 	if row != nil {
 		panic("Test query to 'dv.providers' table failed. Maybe no entries?")
 	}
@@ -82,11 +82,11 @@ func shutdownDatabase() {
 // executing this cleanup stuff every hour.
 //
 // It does a loop every hour. There it
-// 1) updates the dv.nodes table by inserting/updating its entry
+// 1) updates the nodes table by inserting/updating its entry
 //    based on the IP address (nodeid).
-// 2) deletes all dv.nodes entries older than 60 minutes (offline
+// 2) deletes all nodes entries older than 60 minutes (offline
 //    nodes!)
-// 3) selects the lowest nodeid from dv.nodes table
+// 3) selects the lowest nodeid from nodes table
 // 4) compares the lowest nodeid to its own nodeid
 // 5a) if it has the lowest nodeid, it will do the cleanup
 // 5b) if it does not have the smallest nodeid, it will do nothing
@@ -103,14 +103,14 @@ func cleanupHeartBeat() {
 	for range time.Tick(time.Hour) {
 		// Do checks every hour
 
-		sql := `UPSERT INTO dv.nodes(NODEID, LASTACTIVITY) VALUES($1, NOW())`
+		sql := `UPSERT INTO nodes(NODEID, LASTACTIVITY) VALUES($1, NOW())`
 		_, err = DB.Exec(sql, IPVal)
 		if err != nil {
 			LogInternalf("Failed to add/update nodes entry: %v", err)
 			continue
 		}
 
-		sql = `DELETE FROM dv.nodes 
+		sql = `DELETE FROM nodes 
 					WHERE LASTACTIVITY < NOW() - INTERVAL '60 minutes'`
 		_, err = DB.Exec(sql)
 		if err != nil {
@@ -118,7 +118,7 @@ func cleanupHeartBeat() {
 			continue
 		}
 
-		sql = `SELECT MIN(NODEID) AS NODEID FROM dv.nodes`
+		sql = `SELECT MIN(NODEID) AS NODEID FROM nodes`
 		var rows *pgx.Rows
 		rows, err = DB.Query(sql)
 		if err != nil {
@@ -154,11 +154,11 @@ func cleanupHeartBeat() {
 		}
 		/*
 			// slower version, but more easy to read
-			sql = `DELETE FROM dv.data
+			sql = `DELETE FROM data
 						WHERE DURATION > 0 AND
 						NOW() > CREATIONDATE + CONCAT(DURATION::text, ' days')::INTERVAL`
 		*/
-		sql = `DELETE FROM dv.data
+		sql = `DELETE FROM data
 					WHERE DURATION > 0 AND
 					CAST(NOW() - CREATIONDATE AS INT) > DURATION * 86400`
 		_, err = DB.Exec(sql)

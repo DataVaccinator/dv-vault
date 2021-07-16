@@ -27,7 +27,7 @@ func DoLog(logType int, provId int, message string) {
 			fmt.Printf("LOG-ENTRY: %v\n", message)
 		}
 	}
-	sql := `INSERT INTO dv.audit (LOGTYPE, LOGDATE, PROVIDERID, LOGCOMMENT)
+	sql := `INSERT INTO audit (LOGTYPE, LOGDATE, PROVIDERID, LOGCOMMENT)
               VALUES($1, NOW(), $2, $3)`
 
 	_, err := DB.Exec(sql, logType, provId, message)

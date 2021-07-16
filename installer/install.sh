@@ -136,6 +136,9 @@ else
     echo "FAILED"
 fi
 
+echo "Try to stop any running vaccinator deamon... (may fail if not running)"
+systemctl stop vaccinator.service
+
 echo -n "Copy vaccinator executable to $dvpath... "
 # -> owner 'vaccinator', group 'vaccinator', make executable
 if install -o vaccinator -g vaccinator -m +x "./vaccinator" "$dvpath/"

@@ -156,7 +156,7 @@ func MakeUnique(names []string) []string {
 // deleteOneVID deletes one entry from data with its vid
 // No security check here. Used for rollback mainly.
 func deleteOneVID(vid string) bool {
-	_, err := DB.Exec("DELETE FROM dv.data WHERE VID=$1", vid)
+	_, err := DB.Exec("DELETE FROM data WHERE VID=$1", vid)
 	if err != nil {
 		LogInternalf("Failed to delete payload (deleteOneVID) for VID %v. %v",
 			vid, err)
@@ -177,7 +177,7 @@ func insertSearchWords(vid string, words []string) bool {
 		return false
 	}
 	for _, word := range words {
-		_, err = tx.Exec("INSERT INTO dv.search (VID, WORD) VALUES($1, $2)", vid, word)
+		_, err = tx.Exec("INSERT INTO search (VID, WORD) VALUES($1, $2)", vid, word)
 		if err != nil {
 			break
 		}

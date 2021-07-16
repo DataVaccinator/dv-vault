@@ -61,12 +61,12 @@ func doAdd(c echo.Context, clientRequest map[string]interface{}, isPublish bool)
 		vid = GenerateVID()
 		if !isPublish {
 			// ADD function
-			sql = "INSERT INTO dv.data (VID, PAYLOAD, PROVIDERID, CREATIONDATE) " +
+			sql = "INSERT INTO data (VID, PAYLOAD, PROVIDERID, CREATIONDATE) " +
 				"VALUES ($1, $2, $3, NOW())"
 			_, err = DB.Exec(sql, vid, data, sid)
 		} else {
 			// PUBLISH function
-			sql = "INSERT INTO dv.data (VID, PAYLOAD, PROVIDERID, CREATIONDATE, DURATION) " +
+			sql = "INSERT INTO data (VID, PAYLOAD, PROVIDERID, CREATIONDATE, DURATION) " +
 				"VALUES ($1, $2, $3, NOW(), $4)"
 			_, err = DB.Exec(sql, vid, data, sid, duration)
 		}
@@ -142,8 +142,8 @@ func doDelete(c echo.Context, clientRequest map[string]interface{}) error {
 	in := "'{" + strings.Join(vids, ",") + "}'"
 
 	// First delete any possible search words.
-	sql := `DELETE FROM dv.search WHERE VID IN(
-		      SELECT VID FROM dv.data WHERE VID=ANY(` + in + `::bytes[]) AND PROVIDERID=$1
+	sql := `DELETE FROM search WHERE VID IN(
+		      SELECT VID FROM data WHERE VID=ANY(` + in + `::bytes[]) AND PROVIDERID=$1
 			)`
 	_, err = tx.Exec(sql, sid)
 	if err != nil {
@@ -153,7 +153,7 @@ func doDelete(c echo.Context, clientRequest map[string]interface{}) error {
 	}
 
 	// Now delete the payload data.
-	sql = "DELETE FROM dv.data WHERE VID=ANY(" + in + "::bytes[]) AND PROVIDERID=$1"
+	sql = "DELETE FROM data WHERE VID=ANY(" + in + "::bytes[]) AND PROVIDERID=$1"
 	_, err = tx.Exec(sql, sid)
 	if err != nil {
 		tx.Rollback()
@@ -198,7 +198,7 @@ func doUpdate(c echo.Context, clientRequest map[string]interface{}) error {
 	// Validate VID
 	pid := 0
 	duration := 0
-	sql := "SELECT PROVIDERID, DURATION FROM dv.data WHERE VID=$1 AND PROVIDERID=$2"
+	sql := "SELECT PROVIDERID, DURATION FROM data WHERE VID=$1 AND PROVIDERID=$2"
 	DB.QueryRow(sql, vid, sid).Scan(&pid, &duration)
 	if pid < 1 {
 		return generateError(c, DV_VID_NOT_FOUND, "Entry with this VID not found")
@@ -216,7 +216,7 @@ func doUpdate(c echo.Context, clientRequest map[string]interface{}) error {
 		return generateError(c, DV_INTERNAL_ERROR,
 			"Failed to create new transaction. Contact our support.")
 	}
-	sql = "DELETE FROM dv.search WHERE VID=$1"
+	sql = "DELETE FROM search WHERE VID=$1"
 	_, err = tx.Exec(sql, vid)
 	if err != nil {
 		tx.Rollback()
@@ -226,7 +226,7 @@ func doUpdate(c echo.Context, clientRequest map[string]interface{}) error {
 	}
 
 	// Update dataset
-	sql = "UPDATE dv.data SET PAYLOAD=$1 WHERE VID=$2"
+	sql = "UPDATE data SET PAYLOAD=$1 WHERE VID=$2"
 	_, err = tx.Exec(sql, data, vid)
 	if err != nil {
 		tx.Rollback()
@@ -287,13 +287,13 @@ func doGet(c echo.Context, clientRequest map[string]interface{}, isPublish bool)
 	var err error
 	if isPublish == false {
 		// function "get"
-		sql = `SELECT VID, PAYLOAD FROM dv.data 
+		sql = `SELECT VID, PAYLOAD FROM data 
 		    	WHERE VID=ANY(` + in + `::bytes[]) AND 
 					PROVIDERID=$1 AND DURATION < 1`
 		rows, err = DB.Query(sql, sid)
 	} else {
 		// function "getpublished"
-		sql = `SELECT VID, PAYLOAD FROM dv.data 
+		sql = `SELECT VID, PAYLOAD FROM data 
 		    	WHERE VID=ANY(` + in + `::bytes[]) AND 
 					DURATION > 0`
 		rows, err = DB.Query(sql)
@@ -354,14 +354,14 @@ func doSearch(c echo.Context, clientRequest map[string]interface{}) error {
 	}
 
 	// Combine search query
-	sql := "SELECT t1.VID FROM dv.search t1\n"
+	sql := "SELECT t1.VID FROM search t1\n"
 	where := ""
 	for i, word := range words {
 		if !ValidateSearchWord(word) {
 			return generateError(c, DV_INVALID_ENCODING, "Invalid search word encoding")
 		}
 		if i > 0 {
-			sql += fmt.Sprintf("INNER JOIN dv.search t%d ON (t1.VID = t%d.VID)\n",
+			sql += fmt.Sprintf("INNER JOIN search t%d ON (t1.VID = t%d.VID)\n",
 				i+1, i+1)
 		}
 		where += fmt.Sprintf("t%d.WORD LIKE '"+word+"%%'\n    AND ", i+1)
@@ -372,7 +372,7 @@ func doSearch(c echo.Context, clientRequest map[string]interface{}) error {
 	// Filter provider association by putting results in a sub-query
 	// which filters for provider id (sub-query seems more efficient here).
 	// This avoids later confusion while requesting all vids found.
-	sql = "SELECT VID FROM dv.data WHERE VID IN(\n" + sql +
+	sql = "SELECT VID FROM data WHERE VID IN(\n" + sql +
 		"\n) AND PROVIDERID=$1\n"
 	rows, err := DB.Query(sql, sid)
 	if err != nil {

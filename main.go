@@ -279,7 +279,7 @@ func checkCredentials(c echo.Context, clientRequest map[string]interface{}) erro
 	clientIP := c.RealIP()
 	var pwd string = ""
 	var allowedIP string = ""
-	sql := "SELECT password,ip FROM dv.provider WHERE providerid=$1"
+	sql := "SELECT password,ip FROM provider WHERE providerid=$1"
 	DB.QueryRow(sql, sid).Scan(&pwd, &allowedIP)
 	if cfg.DisableIPCheck == 0 && !strings.Contains(allowedIP, clientIP) {
 		go DoLog(LOG_TYPE_ERROR, sid, "Not allowed IP client address "+clientIP)
