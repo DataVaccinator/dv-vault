@@ -22,7 +22,7 @@ jobs:
           sudo apt-get -yq install makeself
         
       - name: Compile DataVaccinator Setup
-        run: make VERSION=1.0.0
+        run: make VERSION=1.0.$GITHUB_RUN_ID
         
       # Removes the latest release, so that we can create a new one in its place
       - name: Delete latest release
