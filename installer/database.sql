@@ -46,4 +46,5 @@ CREATE TABLE IF NOT EXISTS nodes (
 );
 
 INSERT INTO provider (providerid, name, password, ip, creationdate) 
-  VALUES(1, 'test', 'vaccinator', '127.0.0.1', now());
+  VALUES(1, 'test', 'vaccinator', '127.0.0.1', now())
+ON CONFLICT DO NOTHING;
