@@ -94,32 +94,6 @@ func main() {
 		e.IPExtractor = echo.ExtractIPDirect()
 	}
 
-	certsFolder := ""
-	if cfg.LetsEncrypt > 0 {
-		// Prepare Let's Encrypt usage (echo framework)
-		certsFolder = cfg.CertFolder
-		if certsFolder == "" {
-			certsFolder = "certs" // Use default for saving certs
-		}
-		// Ensure last slash, make path absolute
-		certsFolder = filepath.Clean(certsFolder) + "/"
-		// Check if it exists. Create if needed.
-		if _, err := os.Stat(certsFolder); os.IsNotExist(err) {
-			// Given certs folder does not exist. Create it...
-			fmt.Printf("Create missing certificate folder [%v]...\n", certsFolder)
-			err := os.Mkdir(certsFolder, 0770) // 'rwxrwx---'
-			if err != nil {
-				panic("Can not create certs directory at [" + certsFolder + "]. Check permissions!")
-			}
-			fmt.Println("⇨ DONE")
-			if cfg.RunAs != "" {
-				if chown(certsFolder, cfg.RunAs) == false {
-					panic("Failed chown on [" + certsFolder + "]. Check permissions!")
-				}
-			}
-		}
-	}
-
 	if cfg.DisableIPCheck != 0 {
 		fmt.Println("WARNING: IP-Check disabled! Do not use in production!")
 	}
@@ -171,15 +145,23 @@ func main() {
 	DoLog(LOG_TYPE_NOTICE, 0, "Started service")
 
 	serverAddress := cfg.IP + ":" + strconv.Itoa(cfg.Port)
+
 	var sErr error
 	if cfg.LetsEncrypt > 0 {
 		// use own TLS server because echo standard uses TLS 1.0 and 1.2 and
 		// allows usage of unsecure ciphers
+		// Prepare Let's Encrypt usage (echo framework)
+		certsFolder := prepareCertsFolder()
+
 		autoTLSManager := autocert.Manager{
 			Prompt: autocert.AcceptTOS,
 			// Cache certificates to avoid issues with rate limits
 			Cache: autocert.DirCache(certsFolder),
 		}
+		if cfg.Domain != "" {
+			autoTLSManager.HostPolicy = autocert.HostWhitelist(cfg.Domain)
+		}
+
 		// generate server with TLS 1.2 and TLS1.3, using autocert.Manager
 		// this algorithms and ciphers ended in an A+ rating from SSLLabs
 		// test at https://www.ssllabs.com/ssltest/ (07/2021)
@@ -371,4 +353,32 @@ func cleanupDV() {
 	}
 	shutdownDatabase() // close database handles
 	fmt.Println("DataVaccinator stopped regularily")
+}
+
+// prepareCertsFolder ensures that the used certs folder
+// exists and creates it if needed.
+// Returns the complete path including last slash
+func prepareCertsFolder() string {
+	certsFolder := cfg.CertFolder
+	if certsFolder == "" {
+		certsFolder = "certs" // Use default for saving certs
+	}
+	// Ensure last slash, make path absolute
+	certsFolder = filepath.Clean(certsFolder) + "/"
+	// Check if it exists. Create if needed.
+	if _, err := os.Stat(certsFolder); os.IsNotExist(err) {
+		// Given certs folder does not exist. Create it...
+		fmt.Printf("Create missing certificate folder [%v]...\n", certsFolder)
+		err := os.Mkdir(certsFolder, 0770) // 'rwxrwx---'
+		if err != nil {
+			panic("Can not create certs directory at [" + certsFolder + "]. Check permissions!")
+		}
+		fmt.Println("⇨ DONE")
+		if cfg.RunAs != "" {
+			if chown(certsFolder, cfg.RunAs) == false {
+				panic("Failed chown on [" + certsFolder + "]. Check permissions!")
+			}
+		}
+	}
+	return certsFolder
 }

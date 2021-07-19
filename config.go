@@ -12,6 +12,7 @@ type Configuration struct {
 	IP               string `json:"listenIP"`
 	Port             int    `json:"listenPort"`
 	LetsEncrypt      int    `json:"useLetsEncrypt"`
+	Domain           string `json:"domain"`
 	DebugMode        int    `json:"debugMode"`
 	IPExtractor      string `json:"IPExtractor"`
 	DisableIPCheck   int    `json:"disableIPCheck"`

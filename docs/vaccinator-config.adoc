@@ -22,6 +22,7 @@ The default content of config.json looks like this:
     "listenIP": "",
     "listenPort": 443,
     "useLetsEncrypt": 1,
+    "domain": "dc1.myDomain",
     "certFolder": "/opt/vaccinator/certs/",
     "debugMode": 0,
     "IPExtractor": "",
@@ -56,10 +57,15 @@ Reference: https://www.cockroachlabs.com/docs/v21.1/connection-pooling.html#sizi
 |useLetsEncrypt
 |Set to *1* if you like to let DataVaccinator use Let's Encrypt certificate automatically. Default is *0*.
 
+|domain
+|The domain used for certificate generation (Let's Encrypt). You may leave it empty to let acme try to determine by itself.
+
+Please note that this is only used if *useLetsEncrypt* is *1*.
+
 |certFolder
 |The folder where the Let's Encrypt SSL certificate files are getting stored. If you leave empty *""*, it will use a certs/ folder in the binary location folder (eg /opt/vaccinator/certs/). If the folder does not yet exist, it is created with 770 permissions (rwxrwx---).
 
-Please note that this is only used/created if *useLetsEncrypt* is *1*.
+Please note that this is only created and used if *useLetsEncrypt* is *1*.
 
 |debugMode
 |Set to *1* if you like to get additional debug information to StdOut. Default is *0*.

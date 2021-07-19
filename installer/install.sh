@@ -39,6 +39,16 @@ if ! [ -x "$(command -v cockroach)" ]; then
     exit 1
 fi
 
+if ! [ -x "$(command -v dig)" ]; then
+    echo "'dig' commandline tool could not be found. Please install dig first (install bind-utils)!"
+    exit 1
+fi
+
+if ! [ -x "$(command -v curl)" ]; then
+    echo "'curl' commandline tool could not be found. Please install curl first!"
+    exit 1
+fi
+
 DIST=$( cat /etc/*-release | tr [:upper:] [:lower:] | grep -Poi '(debian|ubuntu|red hat|centos|suse|arch)' | head -n 1 )
 if [ -z "$DIST" ]
 then
@@ -54,13 +64,46 @@ then
 fi
 echo $dvpath
 
-echo -n "What IP is the database listening to (127.0.0.1): "
+default=$( curl -s ifconfig.me )
+echo -n "What IP shall the DataVaccinator Vault listen to ($default): "
 read dvip
 if [ -z "$dvip" ]
 then
-    dvip="127.0.0.1"
+    dvip=$default
 fi
 echo $dvip
+
+echo -n "What port shall DataVaccinator Vault listen to (443): "
+read dvport
+if [ -z "$dvport" ]
+then
+    dvport="443"
+fi
+echo $dvport
+
+useSSL="0"
+testdomain=$(dig -x $dvip +short)
+testdomain=${testdomain%?}
+domain=""
+if [ $dvport = "443" ]
+then
+    useSSL="1"
+    echo -n "What is the domain name ($testdomain): "
+    read domain
+    if [ -z "$domain" ]
+    then
+        domain=$testdomain
+    fi
+    echo $domain
+fi
+
+echo -n "What IP is the database listening to (127.0.0.1): "
+read dbip
+if [ -z "$dbip" ]
+then
+    dbip="127.0.0.1"
+fi
+echo $dbip
 
 echo -n "What is the database user name to use (dv): "
 read dvuser
@@ -70,26 +113,13 @@ then
 fi
 echo $dvuser
 
-echo -n "What port shall DataVaccinator Vault listen to (443): "
-read dvport
-if [ -z "$dvport" ]
-then
-    dvport="443"
-fi
-echo $dvport
-useSSL="0"
-if [ $dvport = "443" ]
-then
-    useSSL="1"
-fi
-
 echo "--------------------------- database creation"
 echo -n "Prepare SQL database update script... "
 if sed -e"s|<USER>|$dvuser|g" "./database.sql" > "./database.tmp"
 then
     echo "OK"
     echo "Execute SQL database update script... "
-    if cockroach sql --host $dvip --insecure < "./database.tmp"
+    if cockroach sql --host $dbip --insecure < "./database.tmp"
     then
         echo "SQL script OK"
     else
@@ -155,12 +185,14 @@ echo -n "Copy vaccinator configuration file (config.json) to $dvpath... "
 if [ ! -f "$dvpath/config.json" ]; 
 then
 
-    configString="user=$dvuser host=$dvip port=26257 dbname=vaccinator"
+    configString="user=$dvuser host=$dbip port=26257 dbname=vaccinator"
     if sed -e"s|<PORT>|$dvport|g" \
            -e"s|<CONN>|$configString|g" \
            -e"s|<CERTS>|$dvpath/certs/|g" \
            -e"s|<USER>|vaccinator|g" \
            -e"s|<USESSL>|$useSSL|g" \
+           -e"s|<DOMAIN>|$domain|g" \
+           -e"s|<IP>|$dvip|g" \
            "./config.json" > "$dvpath/config.json"
     then
         echo "OK"
