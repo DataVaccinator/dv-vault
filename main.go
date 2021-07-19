@@ -139,6 +139,10 @@ func main() {
 		return c.String(http.StatusOK, "OK")
 	})
 
+	e.GET("/favicon.ico", func(c echo.Context) error {
+		return c.String(http.StatusGone, "")
+	})
+
 	e.POST("/", protocolHandler)          // bind protocol handler
 	e.POST("/index.php", protocolHandler) // bind protocol handler (legacy)
 
