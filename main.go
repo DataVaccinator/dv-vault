@@ -21,6 +21,7 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"log"
 	"net/http"
 	"os"
 	"os/signal"
@@ -170,8 +171,9 @@ func main() {
 		// this algorithms and ciphers ended in an A+ rating from SSLLabs
 		// test at https://www.ssllabs.com/ssltest/ (07/2021)
 		s = http.Server{
-			Addr:    serverAddress,
-			Handler: e, // set Echo as handler
+			Addr:     serverAddress,
+			Handler:  e,                                       // set Echo as handler
+			ErrorLog: log.New(new(filterLogger), "echo: ", 0), // use our own filtered log
 			TLSConfig: &tls.Config{
 				GetCertificate: autoTLSManager.GetCertificate,
 				NextProtos:     []string{acme.ALPNProto},
