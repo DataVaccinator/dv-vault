@@ -15,7 +15,7 @@ It mainly filters all log entries beginning with
 The rest is simply printed to stdout (ordinary log writer).
 */
 
-// Filter all message sthat start with this string
+// Filter all messages that start with this string
 const toFilter = "echo: http: TLS handshake error from"
 
 type filterLogger struct {

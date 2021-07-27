@@ -61,7 +61,7 @@ func initDatabase() bool {
 	var w int
 	row := DB.QueryRow("SELECT COUNT(*) FROM provider").Scan(&w)
 	if row != nil {
-		panic("Test query to 'dv.providers' table failed. Maybe no entries?")
+		panic("Test query to 'provider' table failed. Maybe no entries?")
 	}
 
 	fmt.Printf("(maxConnections: %v) Done\n", maxConn)
