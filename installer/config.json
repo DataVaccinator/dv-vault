@@ -1,8 +1,7 @@
 { 
     "connectionString": "<CONN>", 
     "maxConnections": 0,
-    "listenIP": "<IP>",
-    "listenPort": <PORT>,
+    "listenIPPort": "<IP>:<PORT>",
     "useLetsEncrypt": <USESSL>,
     "domain": "<DOMAIN>",
     "certFolder": "<CERTS>",

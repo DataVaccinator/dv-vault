@@ -271,3 +271,48 @@ func GetOutboundIP() net.IP {
 
 	return localAddr.IP
 }
+
+type IPPort struct {
+	IP   string
+	Port int
+}
+
+// splitIPPort examines a given string that may look like this:
+// "IP:Port" or multiple like "IP:Port IP:Port IP:Port"
+// While IP can be either an IPv4 address or an IPv6 address in square brackets
+// The Port must be numeric > 10
+// Example: "[2a02:2e0:3fe:1001:2177:772e:2:85]:8080 127.0.0.1:8081"
+//          will return an array of type IPPort.
+func splitIPPort(listenIPPorts string) []IPPort {
+
+	// remove any duplicate spaces
+	space := regexp.MustCompile(`\s+`)
+	listenIPPorts = space.ReplaceAllString(listenIPPorts, " ")
+
+	// Remove any trailing or leading spaces
+	listenIPPorts = strings.Trim(listenIPPorts, " ")
+
+	// Split multiple entries
+	listenEntries := strings.Split(listenIPPorts, " ")
+
+	// define output list
+	entries := make([]IPPort, len(listenEntries))
+
+	// RegEx finds IPs and Ports (no validation, just finding)
+	re := regexp.MustCompile(`(?i)(\[.*\]|\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3}):(\d{2,})`)
+	for i := 0; i < len(listenEntries); i++ {
+		if listenEntries[i] == "" {
+			continue // skip empty
+		}
+
+		result := re.FindStringSubmatch(listenEntries[i])
+		if len(result) > 1 {
+			entries[i].IP = result[1]
+			entries[i].Port, _ = strconv.Atoi(result[2])
+		} else {
+			panic(fmt.Sprintf("Invalid listenIPPort configuration \"%v\" "+
+				"(must be IPv4:Port or [IPv6]:Port)\n", listenEntries[i]))
+		}
+	}
+	return entries
+}

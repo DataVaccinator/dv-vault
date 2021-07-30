@@ -40,7 +40,7 @@ import (
 var SERVER_VERSION string
 
 var e *echo.Echo
-var s http.Server
+var servers []http.Server
 
 func main() {
 	if SERVER_VERSION == "" {
@@ -59,6 +59,8 @@ func main() {
 
 	go cleanupHeartBeat() // start background task for DB cleanup
 
+	go keepAliveHeartBeat() // keep DB connection healthy
+
 	// handle OS signals
 	c := make(chan os.Signal, 1)
 	signal.Notify(c, os.Interrupt, syscall.SIGTERM)
@@ -68,14 +70,28 @@ func main() {
 		os.Exit(0)
 	}()
 
+	// parse listen IPs and ports
+	if cfg.ListenIPPort == "" {
+		panic("Please set listenIPPort value in your config")
+	}
+	listenTo := splitIPPort(cfg.ListenIPPort)
+
 	// create echo framework handle
 	e = echo.New()
 
-	if cfg.Port < 1024 && cfg.RunAs != "" {
+	// check if degrade of the process is needed
+	needDegrade := false
+	for i := 0; i < len(listenTo); i++ {
+		if listenTo[i].Port < 1024 {
+			needDegrade = true
+		}
+	}
+	if needDegrade == true && cfg.RunAs != "" {
 		// start background task for degrading root privileges
 		go degradePrivileges(e, cfg.RunAs)
 	}
 
+	// respect debug
 	if cfg.DebugMode > 0 {
 		e.Debug = true
 		e.Use(middleware.LoggerWithConfig(middleware.LoggerConfig{
@@ -84,6 +100,7 @@ func main() {
 		fmt.Println("Debug-Mode is activated.")
 	}
 
+	// enable IPExtractor if needed
 	switch strings.ToUpper(cfg.IPExtractor) {
 	case "XFF":
 		e.IPExtractor = echo.ExtractIPFromXFFHeader()
@@ -95,10 +112,12 @@ func main() {
 		e.IPExtractor = echo.ExtractIPDirect()
 	}
 
+	// some warning if IP check is disabled
 	if cfg.DisableIPCheck != 0 {
 		fmt.Println("WARNING: IP-Check disabled! Do not use in production!")
 	}
 
+	// enable CORSDomains if needed
 	if cfg.CORSDomains != "" {
 		// Enable CORS (https://fetch.spec.whatwg.org/)
 		domains := strings.Split(cfg.CORSDomains, ",")
@@ -109,6 +128,7 @@ func main() {
 		fmt.Printf("NOTE: Enabled CORS domains for \"%v\"\n", cfg.CORSDomains)
 	}
 
+	// Patch all results to comply with common security rules
 	e.Use(func(next echo.HandlerFunc) echo.HandlerFunc {
 		return func(c echo.Context) error {
 			c.Response().Header().Add("Strict-Transport-Security", "max-age=63072000; includeSubdomains; preload")
@@ -123,11 +143,14 @@ func main() {
 	})
 
 	e.HideBanner = true // hide the echo framework banner during start
+
+	// generic handler to satisfy browser tests
 	e.GET("/", func(c echo.Context) error {
 		return c.String(http.StatusOK,
 			"Welcome to DataVaccinator Vault V"+SERVER_VERSION)
 	})
 
+	// some ping for health check or loadbalancers health checks
 	e.GET("/ping", func(c echo.Context) error {
 		// TODO: Maybe check other values with relevance for the end user
 
@@ -140,25 +163,23 @@ func main() {
 		return c.String(http.StatusOK, "OK")
 	})
 
+	// satisfy another webbrowser thing
 	e.GET("/favicon.ico", func(c echo.Context) error {
 		return c.String(http.StatusGone, "")
 	})
 
+	// bind protocol handlers
 	e.POST("/", protocolHandler)          // bind protocol handler
 	e.POST("/index.php", protocolHandler) // bind protocol handler (legacy)
 
-	DoLog(LOG_TYPE_NOTICE, 0, "Started service")
-
-	serverAddress := cfg.IP + ":" + strconv.Itoa(cfg.Port)
-
-	var sErr error
+	var autoTLSManager autocert.Manager
 	if cfg.LetsEncrypt > 0 {
 		// use own TLS server because echo standard uses TLS 1.0 and 1.2 and
 		// allows usage of unsecure ciphers
 		// Prepare Let's Encrypt usage (echo framework)
 		certsFolder := prepareCertsFolder()
 
-		autoTLSManager := autocert.Manager{
+		autoTLSManager = autocert.Manager{
 			Prompt: autocert.AcceptTOS,
 			// Cache certificates to avoid issues with rate limits
 			Cache: autocert.DirCache(certsFolder),
@@ -166,38 +187,51 @@ func main() {
 		if cfg.Domain != "" {
 			autoTLSManager.HostPolicy = autocert.HostWhitelist(cfg.Domain)
 		}
+	}
 
-		// generate server with TLS 1.2 and TLS1.3, using autocert.Manager
-		// this algorithms and ciphers ended in an A+ rating from SSLLabs
-		// test at https://www.ssllabs.com/ssltest/ (07/2021)
-		s = http.Server{
-			Addr:     serverAddress,
-			Handler:  e,                                       // set Echo as handler
-			ErrorLog: log.New(new(filterLogger), "echo: ", 0), // use our own filtered log
-			TLSConfig: &tls.Config{
-				GetCertificate: autoTLSManager.GetCertificate,
-				NextProtos:     []string{acme.ALPNProto},
-				MinVersion:     tls.VersionTLS12,
-				CipherSuites: []uint16{
-					tls.TLS_ECDHE_RSA_WITH_AES_128_GCM_SHA256,
-					tls.TLS_ECDHE_ECDSA_WITH_AES_128_GCM_SHA256,
-					tls.TLS_ECDHE_RSA_WITH_AES_128_CBC_SHA,
-					tls.TLS_ECDHE_ECDSA_WITH_AES_128_CBC_SHA,
-					tls.TLS_ECDHE_RSA_WITH_AES_256_CBC_SHA,
-					tls.TLS_ECDHE_ECDSA_WITH_AES_256_CBC_SHA,
-					tls.TLS_RSA_WITH_AES_128_CBC_SHA,
-					tls.TLS_RSA_WITH_AES_256_CBC_SHA,
+	// create the web listeners
+	servers = make([]http.Server, len(listenTo))
+	for i := 0; i < len(listenTo); i++ {
+		var serverAddress = listenTo[i].IP + ":" + strconv.Itoa(listenTo[i].Port)
+		if cfg.LetsEncrypt > 0 {
+			// generate server with TLS 1.2 and TLS1.3, using autocert.Manager
+			// this algorithms and ciphers ended in an A+ rating from SSLLabs
+			// test at https://www.ssllabs.com/ssltest/ (07/2021)
+
+			servers[i] = http.Server{
+				Addr:     serverAddress,
+				Handler:  e,                                       // set Echo as handler
+				ErrorLog: log.New(new(filterLogger), "echo: ", 0), // use our own filtered log
+				TLSConfig: &tls.Config{
+					GetCertificate: autoTLSManager.GetCertificate,
+					NextProtos:     []string{acme.ALPNProto},
+					MinVersion:     tls.VersionTLS12,
+					CipherSuites: []uint16{
+						tls.TLS_ECDHE_RSA_WITH_AES_128_GCM_SHA256,
+						tls.TLS_ECDHE_ECDSA_WITH_AES_128_GCM_SHA256,
+						tls.TLS_ECDHE_RSA_WITH_AES_128_CBC_SHA,
+						tls.TLS_ECDHE_ECDSA_WITH_AES_128_CBC_SHA,
+						tls.TLS_ECDHE_RSA_WITH_AES_256_CBC_SHA,
+						tls.TLS_ECDHE_ECDSA_WITH_AES_256_CBC_SHA,
+						tls.TLS_RSA_WITH_AES_128_CBC_SHA,
+						tls.TLS_RSA_WITH_AES_256_CBC_SHA,
+					},
 				},
-			},
+			}
+			fmt.Println("⇨ https server started on " + serverAddress)
+			go servers[i].ListenAndServeTLS("", "")
+		} else {
+			servers[i] = http.Server{
+				Addr:     serverAddress,
+				Handler:  e,                                       // set Echo as handler
+				ErrorLog: log.New(new(filterLogger), "echo: ", 0), // use our own filtered log
+			}
+			fmt.Println("⇨ http server started on " + serverAddress)
+			go servers[i].ListenAndServe()
 		}
-		fmt.Println("⇨ https server started on " + serverAddress)
-		sErr = s.ListenAndServeTLS("", "")
-	} else {
-		sErr = e.Start(serverAddress)
 	}
-	if sErr != nil {
-		fmt.Printf("%v\n", sErr)
-	}
+	DoLog(LOG_TYPE_NOTICE, 0, "Started service(s)")
+	select {}
 }
 
 // protocolHandler is the main handler for all calls to index.php (legacy)
@@ -347,16 +381,20 @@ func degradePrivileges(e *echo.Echo, userName string) {
 // cleanupDV provides a clean shutdown of this tool
 func cleanupDV() {
 	DoLog(LOG_TYPE_NOTICE, 0, "Received stop signal. Stopping service.")
-	if s.Handler != nil {
-		err := s.Close() // close TLS framework (net connections)
-		if err != nil {
-			fmt.Printf("Failed closing TLS network connections. [%v]\n", err)
+
+	// close all open server handles
+	for i := 0; i < len(servers); i++ {
+		if servers[i].Handler != nil {
+			err := servers[i].Close() // close server (net connections)
+			if err != nil {
+				fmt.Printf("Failed closing network connection %s. [%v]\n",
+					servers[i].Addr, err)
+			} else {
+				fmt.Printf("Closed network connection %v\n", servers[i].Addr)
+			}
 		}
 	}
-	err := e.Close() // close echo framework (net connections)
-	if err != nil {
-		fmt.Printf("Failed closing echo network connections. [%v]\n", err)
-	}
+
 	shutdownDatabase() // close database handles
 	fmt.Println("DataVaccinator stopped regularily")
 }

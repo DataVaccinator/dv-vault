@@ -19,8 +19,7 @@ The default content of config.json looks like this:
 { 
     "connectionString": "connectionString", 
     "maxConnections": 0,
-    "listenIP": "",
-    "listenPort": 443,
+    "listenIPPort": "127.0.0.1:443",
     "useLetsEncrypt": 1,
     "domain": "dc1.myDomain",
     "certFolder": "/opt/vaccinator/certs/",
@@ -48,11 +47,15 @@ Reference: https://www.postgresql.org/docs/11/libpq-connect.html#LIBPQ-CONNSTRIN
 
 Reference: https://www.cockroachlabs.com/docs/v21.1/connection-pooling.html#sizing-connection-pools
 
-|listenIP
-|The IPv4 address to listen to. If you keep it empty, it listens on all available interfaces. Default is empty string.
+|listenIPPort
+|The IP address(es) and ports to listen to. This value is mandatory.
 
-|listenPort
-|Set the port to listen to. This value must be set. For SSL connections (https), set to 443.
+*listenIPPort* allows one or more entries, divided by a space character. An entry has to look like this: *"IP:Port"*. 
+
+Multiple entries look like *"IP:Port IP:Port IP:Port"*. The IP part can be an IPv4 address like 127.0.0.1 or an IPv6 address like [::1] (in square brackets). Both need to be followed by a proxy value.
+
+Example for listening on port 443 for both IPv4 and IPv6: +
+"12.34.56.78:443 [2a02:2e0:3fe:1001:1277:772e::85]:443"
 
 |useLetsEncrypt
 |Set to *1* if you like to let DataVaccinator use Let's Encrypt certificate automatically. Default is *0*.

@@ -2,13 +2,14 @@
 :author: DataVaccinator Team
 :email: info@datavaccinator.com
 
-This is the DataVaccinator Vault platform. It has to be installed on some Linux environment in order to provide the service.
+This is the DataVaccinator Vault platform. It has to be installed on some Linux environment in order to provide a REST API for pseudonymisation services.
 
 == The DataVaccinator Vault platform offers
 
 * **Multi tenant use** (multiple service providers served on the same platform).
 * **Word based search** using an encrypted index which ensures no readable information on server side.
 * Can use link:https://letsencrypt.org/[**Let's Encrypt** certificates] out of the box.
+* Supports both *IPv4* and *IPv6* and allows listening on multiple addresses (for the same domain).
 * Fully automatic **IP whitelisting** by only serving API requests from dedicated IP addresses.
 * DataVaccinator Vault supports working behind **proxy servers** and **loadbalancers** (like link:http://www.haproxy.org/[HAProxy]).
 * It supports link:https://fetch.spec.whatwg.org/#cors-protocol[**CORS**] to avoid issues with cross origin requests.
@@ -49,7 +50,7 @@ In order to run a DataVaccinator Vault, please follow this guide for installatio
 4. Follow the steps from the setup script.
 5. Edit the `conf.json` file to your needs. 
    - By default it is located at `/etc/vaccinator/config.json` folder.
-   - Check the docs/vaccinator-config.adoc for details about the options.
+   - Check the link:./docs/vaccinator-config.adoc[docs/vaccinator-config.adoc] for details about the configuration options.
    - Remember to use `sudo` to edit this file.
 6. Start the service using +
    `sudo systemctl start vaccinator`

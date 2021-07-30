@@ -71,6 +71,7 @@ func initDatabase() bool {
 // shutdownDatabase closes all database connections for clean shutdown
 func shutdownDatabase() {
 	DB.Close()
+	fmt.Println("Database closed")
 }
 
 // cleanupHeartBeat is called async to find and delete expired
@@ -189,4 +190,22 @@ func getMyIPVal() (int, error) {
 		myVal = myVal[len(myVal)-10:]
 	}
 	return strconv.Atoi(myVal)
+}
+
+// keepAliveHeartBeat is called async to keep the DB connections
+// to CockroachDB up and running. Without, we start getting errors
+// like "write tcp 10.0.0.10:34678->10.0.0.10:26257: write: broken pipe"
+func keepAliveHeartBeat() {
+	for range time.Tick(time.Minute) {
+		// Do checks every minute
+
+		if cfg.DebugMode > 0 {
+			fmt.Printf("Ping database connection.\n")
+		}
+		// Check database availability
+		_, err := DB.Exec(";")
+		if err != nil {
+			fmt.Println("WARN: Database ping was not successful")
+		}
+	}
 }
