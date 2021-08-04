@@ -85,6 +85,38 @@ The system then returns two additional fields:
 |99	|Some internal service error happened. Please contact support.	|ERROR
 |=======
 
+== Example protocol commmunication
+
+This is an example request:
+[source,json]
+----
+{
+    "version": 2,
+    "op": "get",
+    "sid": 1,
+    "spwd": "myPassword",
+    "vid": "72f641db6bf18847a33a615501f3a571",
+    "uid": 12345
+}
+----
+
+And the resulting example answer:
+[source,json]
+----
+{
+    "status": "OK",
+    "uid": "12345",
+    "data": {
+        "72f641db6bf18847a33a615501f3a571": {
+            "data": "aes-256-cbc:f7:29a1c8b68d8a:Z2Zkc2dmZG1rZyBmZ (...)
+                     XI0N2Z2IDZyNHkzMmY0Mw==",
+            "status": "OK"
+        }
+    }
+}
+----
+
+
 == PING function
 
 You may want to verify if DataVaccinator Vault is alive and working by simply calling it's *ping* function like this:
@@ -96,6 +128,8 @@ If it does not return with "OK", something is wrong (eg database backend not ava
 TIP: This *ping* service does not consume many ressources, so you can call this every minute to verify the status of your DataVaccinator Vault instances. We suggest to use a networking timeout of maximum two seconds for this.
 
 == API functions
+
+This chapter describes all available *op* functions of the protocol, their meaning, parameters and expected results.
 
 === Add new dataset
 
@@ -111,6 +145,7 @@ This call is adding a new dataset to the system (eg PID).
 |words	|Array of SearchHashes to add for <<_search, search function>> (optional).
 |=======
 
+Result:
 [cols="1,4"]
 |=======
 |Field	|Description
