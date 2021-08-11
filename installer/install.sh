@@ -49,7 +49,7 @@ if ! [ -x "$(command -v curl)" ]; then
     exit 1
 fi
 
-DIST=$( cat /etc/*-release | tr [:upper:] [:lower:] | grep -Poi '(debian|ubuntu|red hat|centos|suse|arch)' | head -n 1 )
+DIST=$( cat /etc/*-release | tr [:upper:] [:lower:] | grep -Poi '(debian|ubuntu|red hat|centos|suse|arch|rocky)' | head -n 1 )
 if [ -z "$DIST" ]
 then
     echo "This distribution is not supported by this script. Sorry."
@@ -140,7 +140,7 @@ then
     then
         echo "FAILED user creation"
     fi
-elif [ "$DIST" = "centos" -o "$DIST" = "red hat" ]
+elif [ "$DIST" = "centos" -o "$DIST" = "red hat" -o "$DIST" = "rocky" ]
 then
     if ! adduser --system --no-create-home vaccinator
     then
