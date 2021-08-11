@@ -13,7 +13,7 @@ This is the DataVaccinator Vault platform. It has to be installed on some Linux 
 * Fully automatic **IP whitelisting** by only serving API requests from dedicated IP addresses.
 * DataVaccinator Vault supports working behind **proxy servers** and **loadbalancers** (like link:http://www.haproxy.org/[HAProxy]).
 * It supports link:https://fetch.spec.whatwg.org/#cors-protocol[**CORS**] to avoid issues with cross origin requests.
-* **Installer-Script** supports **CentOS**, **Red Hat**, **Arch Linux**, **Suse Linux**, **Ubuntu** and **Debian** systems (all x86_64).
+* **Installer-Script** supports **CentOS**, **Red Hat**, **Rocky Linux**, **Arch Linux**, **Suse Linux**, **Ubuntu** and **Debian** systems (all x86_64).
 * Installer-Script automatically generates **systemd daemon**, system user and group, database user and database structure.
 
 == What is it good for?
