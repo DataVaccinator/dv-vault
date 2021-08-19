@@ -20,12 +20,12 @@ func doCheck(c echo.Context, clientRequest map[string]interface{}) error {
 	// Announce that "search" functionality is available
 	rPlugin1 := make(map[string]interface{})
 	rPlugin1["name"] = "search"
-	rPlugin1["vendow"] = "DataVaccinator"
+	rPlugin1["vendor"] = "DataVaccinator"
 	rPlugin1["license"] = "AGPL"
 
 	rPlugin2 := make(map[string]interface{})
 	rPlugin2["name"] = "publish"
-	rPlugin2["vendow"] = "DataVaccinator"
+	rPlugin2["vendor"] = "DataVaccinator"
 	rPlugin2["license"] = "AGPL"
 
 	// Compile result
