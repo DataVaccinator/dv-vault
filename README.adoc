@@ -49,7 +49,7 @@ In order to run a DataVaccinator Vault, please follow this guide for installatio
    `sudo sh dv-vault-1.0.0_x86_64_setup.sh`
 4. Follow the steps from the setup script.
 5. Edit the `conf.json` file to your needs. 
-   - By default it is located at `/etc/vaccinator/config.json` folder.
+   - By default it is located at `/opt/vaccinator/config.json` folder.
    - Check the link:./docs/vaccinator-config.adoc[docs/vaccinator-config.adoc] for details about the configuration options.
    - Remember to use `sudo` to edit this file.
 6. Start the service using +
