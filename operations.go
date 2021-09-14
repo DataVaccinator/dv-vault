@@ -331,7 +331,13 @@ func doGet(c echo.Context, clientRequest map[string]interface{}, isPublish bool)
 		results[k] = dResult
 	}
 
-	go DoLog(LOG_TYPE_GET, sid, vidList)
+	// The logging for GET operation was commented to prevent
+	// flooded databases. The requesting of VIDs does not
+	// seem that interesting, anyway. More interesting is the
+	// creation, manipulation or deletion of entries (which is
+	// still logged).
+	// 14. Sept V. Schmid
+	// go DoLog(LOG_TYPE_GET, sid, vidList)
 
 	// Compile result
 	rResult := make(map[string]interface{})
