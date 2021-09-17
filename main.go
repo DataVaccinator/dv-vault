@@ -303,13 +303,12 @@ func checkCredentials(c echo.Context, clientRequest map[string]interface{}) erro
 	var allowedIP string = ""
 	sql := "SELECT password,ip FROM provider WHERE providerid=$1"
 	DB.QueryRow(sql, sid).Scan(&pwd, &allowedIP)
+	if pwd != spwd {
+		return errors.New("Invalid credentials")
+	}
 	if cfg.DisableIPCheck == 0 && !strings.Contains(allowedIP, clientIP) {
 		go DoLog(LOG_TYPE_ERROR, sid, "Not allowed IP client address "+clientIP)
 		return errors.New("Not allowed IP client address")
-	}
-	if pwd != spwd {
-		go DoLog(LOG_TYPE_ERROR, sid, "Wrong sid/spwd")
-		return errors.New("Invalid credentials")
 	}
 
 	return nil // success
