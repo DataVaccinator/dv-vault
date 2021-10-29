@@ -41,6 +41,7 @@ var SERVER_VERSION string
 
 var e *echo.Echo
 var servers []http.Server
+var globalSigChan chan os.Signal
 
 func main() {
 	if SERVER_VERSION == "" {
@@ -62,10 +63,10 @@ func main() {
 	go keepAliveHeartBeat() // keep DB connection healthy
 
 	// handle OS signals
-	c := make(chan os.Signal, 1)
-	signal.Notify(c, os.Interrupt, syscall.SIGTERM)
+	globalSigChan = make(chan os.Signal, 1)
+	signal.Notify(globalSigChan, os.Interrupt, syscall.SIGTERM)
 	go func() {
-		<-c
+		<-globalSigChan
 		cleanupDV()
 		os.Exit(0)
 	}()
@@ -79,14 +80,8 @@ func main() {
 	// create echo framework handle
 	e = echo.New()
 
-	// check if degrade of the process is needed
-	needDegrade := false
-	for i := 0; i < len(listenTo); i++ {
-		if listenTo[i].Port < 1024 {
-			needDegrade = true
-		}
-	}
-	if needDegrade == true && cfg.RunAs != "" {
+	// check if degrade of the process is wanted
+	if cfg.RunAs != "" {
 		// start background task for degrading root privileges
 		go degradePrivileges(e, cfg.RunAs)
 	}
@@ -219,7 +214,7 @@ func main() {
 				},
 			}
 			fmt.Println("⇨ https server started on " + serverAddress)
-			go servers[i].ListenAndServeTLS("", "")
+			go listenWrapperTLS(&servers[i])
 		} else {
 			servers[i] = http.Server{
 				Addr:     serverAddress,
@@ -227,11 +222,41 @@ func main() {
 				ErrorLog: log.New(new(filterLogger), "echo: ", 0), // use our own filtered log
 			}
 			fmt.Println("⇨ http server started on " + serverAddress)
-			go servers[i].ListenAndServe()
+			go listenWrapper(&servers[i])
 		}
 	}
 	DoLog(LOG_TYPE_NOTICE, 0, "Started service(s)")
+
 	select {}
+}
+
+// listenWrapper is wrapping the ListenAndServe call to make
+// sure we can handle errors (eg port in use)
+func listenWrapper(server *http.Server) {
+	ret := server.ListenAndServe()
+	listenWrapperResultHandler(ret, server) // handle return value
+}
+
+// listenWrapperTLS is wrapping the ListenAndServeTLS call to make
+// sure we can handle errors (eg port in use)
+func listenWrapperTLS(server *http.Server) {
+	ret := server.ListenAndServeTLS("", "")
+	listenWrapperResultHandler(ret, server) // handle return value
+}
+
+// listenWrapperResultHandler handles result error object
+// from listenWrapper and listenWrapperTLS
+func listenWrapperResultHandler(ret error, server *http.Server) {
+	if ret != nil {
+		if ret.Error() == "http: Server closed" {
+			return
+		}
+		fmt.Printf("ERROR: %v --> WILL TERMINATE!\n", ret.Error())
+		// this connection is not working, so no handler to free
+		server.Handler = nil
+		// initiate shutdown
+		globalSigChan <- syscall.SIGTERM
+	}
 }
 
 // protocolHandler is the main handler for all calls to index.php (legacy)
@@ -366,10 +391,16 @@ func generateError(c echo.Context, errorCode int, errorDesc string) error {
 
 // degradePrivileges waits until ListenerAddr is set and then
 // tries to degrade the user of this process to the given user.
+// NOTE: The 5 seconds fallback is needed because we found no
+//       reliable way to detect successful port binding by
+//       echo framework. So we downgrade latest 5 seconds after
+//       start.
 func degradePrivileges(e *echo.Echo, userName string) {
+	start := time.Now()
 	for {
 		adr := e.ListenerAddr()
-		if adr != nil {
+		tlsAdr := e.TLSListenerAddr()
+		if adr != nil || tlsAdr != nil || time.Since(start) > 5*time.Second {
 			degradeMe(userName)
 			break
 		}

@@ -216,22 +216,24 @@ func degradeMe(userName string) {
 		fmt.Printf("Running as root, downgrading to user %v...\n", userName)
 		user, err := user.Lookup(userName)
 		if err != nil {
-			fmt.Printf("⇨ User %v not found or other error: %v\n", userName, err)
+			fmt.Printf("⇨ WARNING: User %v not found or other error: %v\n", userName, err)
 			return
 		}
 		uid, _ := strconv.ParseInt(user.Uid, 10, 32)
 		gid, _ := strconv.ParseInt(user.Gid, 10, 32)
 		cerr, errno := C.setgid(C.__gid_t(gid))
 		if cerr != 0 {
-			fmt.Printf("⇨ Unable to set GID due to error: %v\n", errno)
+			fmt.Printf("⇨ WARNING: Unable to set GID due to error: %v\n", errno)
 			return
 		}
 		cerr, errno = C.setuid(C.__uid_t(uid))
 		if cerr != 0 {
-			fmt.Printf("⇨ Unable to set UID due to error: %v\n", errno)
+			fmt.Printf("⇨ WARNING: Unable to set UID due to error: %v\n", errno)
 			return
 		}
 		fmt.Println("⇨ DONE")
+	} else {
+		fmt.Println("WARNING: Not running as root, therefore no runAs downgrading possible.")
 	}
 }
 
