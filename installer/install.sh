@@ -64,6 +64,36 @@ then
 fi
 echo $dvpath
 
+if [ -f "$dvpath/vaccinator" ]; 
+then
+    echo " "
+    echo "There is already some vaccinator executable in that location."
+    echo -n "Do you want me to only update and restart the vaccinator executable (Y/n): "
+    read wantUpdate
+    if [ -z "$wantUpdate" -o "$wantUpdate" = "y" -o "$wantUpdate" = "Y" ]
+    then
+        echo "Stopping vaccinator.service..."
+        systemctl stop vaccinator.service
+        echo -n "Copy vaccinator executable to $dvpath... "
+        if install -o vaccinator -g vaccinator -m +x "./vaccinator" "$dvpath/"
+        then
+            echo "OK"
+        else
+            echo "FAILED"
+            echo "Stop because the installation source seems missing the 'vaccinator' executable!"
+            exit 1
+        fi
+        echo "Starting vaccinator.service..."
+        systemctl start vaccinator.service
+        echo " "
+        echo "Hint:"
+        echo "- Validate service logs using 'journalctl -et vaccinator'"
+        echo " "
+        echo "Finished"
+        exit 0
+    fi
+fi
+
 default=$( curl -s ifconfig.me )
 echo -n "What IP shall the DataVaccinator Vault listen to ($default): "
 read dvip
