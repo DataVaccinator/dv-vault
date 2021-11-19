@@ -1,13 +1,14 @@
 package main
 
 /*
-This package contains the functions that handle the protocol api
+This file contains the functions that handle the protocol api
 operations.
 */
 
 import (
 	"errors"
 	"fmt"
+	"strconv"
 	"strings"
 
 	"github.com/jackc/pgx"
@@ -47,10 +48,11 @@ func doAdd(c echo.Context, clientRequest map[string]interface{}, isPublish bool)
 	if data == "" || sid == 0 {
 		return generateError(c, DV_MISSING_PARAM, "Missing data")
 	}
-	if len(data) > 1024*1024 {
-		return generateError(c, DV_INVALID_PARAMSIZE, "Data bigger than 1MB")
+	if len(data) > CNF_MAX_PAYLOAD_MB*1024*1024 {
+		return generateError(c, DV_INVALID_PARAMSIZE,
+			"Data bigger than "+strconv.Itoa(CNF_MAX_PAYLOAD_MB)+"MB")
 	}
-	if isPublish && (duration < 1 || duration > 365) {
+	if isPublish && (duration < 1 || duration > CNF_MAX_PUBLISH_DAYS) {
 		return generateError(c, DV_INVALID_PARAMSIZE, "Invalid duration range")
 	}
 
@@ -188,8 +190,9 @@ func doUpdate(c echo.Context, clientRequest map[string]interface{}) error {
 	if data == "" || sid == 0 {
 		return generateError(c, DV_MISSING_PARAM, "Missing data")
 	}
-	if len(data) > 1024*1024 {
-		return generateError(c, DV_INVALID_PARAMSIZE, "Data bigger than 1MB")
+	if len(data) > CNF_MAX_PAYLOAD_MB*1024*1024 {
+		return generateError(c, DV_INVALID_PARAMSIZE,
+			"Data bigger than "+strconv.Itoa(CNF_MAX_PAYLOAD_MB)+"MB")
 	}
 	if !ValidateVID(vid) {
 		return generateError(c, DV_VID_NOT_FOUND, "Invalid VID")
@@ -357,6 +360,10 @@ func doSearch(c echo.Context, clientRequest map[string]interface{}) error {
 
 	if len(words) < 1 {
 		return generateError(c, DV_MISSING_PARAM, "Missing words")
+	}
+	if len(words) > CNF_MAX_SEARCH_TERMS {
+		return generateError(c, DV_INVALID_PARAMSIZE,
+			"Maximum "+strconv.Itoa(CNF_MAX_SEARCH_TERMS)+" search terms allowed")
 	}
 
 	// Combine search query
