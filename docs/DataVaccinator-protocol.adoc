@@ -36,6 +36,8 @@ All calls will return a JSON encoded string, containing the result of the operat
 There is always a _status_ field returned. If it is not _OK_, something went wrong. In this case, the status is either _INVALID_ or _ERROR_.
 An additional _code_ field contains the error number and the _desc_ field contains additional information about the error (only if _status_ is not _OK_).
 
+=== Payload
+
 The _data_ field contains encrypted payload for the identity management. It is usually named Vaccination Data. It is encrypted due to contained receipt.
 A data field is always encoded like this:
 
@@ -56,6 +58,17 @@ NOTE: By this encryption, using the app-id as key, the service provider and the 
 This is useful, for example, if the *changeAppId()* class failed during processing (please refer to *changeAppId()* function description in JavaScript class documentation).
 
 NOTE: The above chosen AES cipher is just the reference implementation. You can also use others (like Twofish). The only thing to respect is the encoding using hex for the _cs_ and the _iv/nonce_.
+
+=== Authentication
+Currently, the DataVaccinator Vault supports a simple authentication schema. For this, every call needs to provide both ID and password (*sid* and *spwd*). In combination with IP whitelisting, this is already a good level of security.
+
+*Some additional thoughts about authentication*
+
+Nevertheless, if IP whitelisting is not practicable, we still consider it as hard to break in. The reason is the fact that even if you manage to log-in as a service provider, you still only can receive any data if you know the VIDs of the data. As long as you don't know, it is hard to get some data. And even if you get that, you still receive encrypted data. This is encrypted by the password the client software used for encryption and typically not known by the service provider.
+
+A future version may add some sort of hash challenge and a time limited session token to prevent replay attacks and add some additional barrier. Also, if the *sid* would be hard to guess, we might block such service provider after trying to log in with a wrong password. This is still to implement.
+
+We currently decided against *OAuth 2.0* or *OpenID Connect* for API authentication. Mainly because it adds a third party dependency that would shut down the whole API if the identity provider is not available (outage, connectivity etc). It also would add more complexity and consumes more bandwith. Territorial and legal questions regarding a reliable identity provider have also come up. For example, to avoid big US players like Google, Microsoft or Amazon, you first would have to find another identity provider that fullfils your needs. *JWT* seem unadequate for our needs, too.
 
 == Transport encryption
 
