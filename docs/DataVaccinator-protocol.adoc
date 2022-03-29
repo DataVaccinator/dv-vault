@@ -266,12 +266,12 @@ This call is retrieving the data of one or more existing entries which have been
 
 Multiple VIDs can get submitted as array of VIDs or as a string with concatenated VIDs using blank as divider character. The allowed maximum of VIDs is 500 per request.
 
+|uid	|User identifier provided by the API user.
+|=======
+
 [CAUTION]
 Due to the nature of the publishing feature, this will only return data which was uploaded using the <<publish, publish>> function. +
 Also, it will return data even if the requesting service provider is not the one who uploaded (sid).
-
-|uid	|User identifier provided by the API user.
-|=======
 
 Result:
 [cols="1,4"]
