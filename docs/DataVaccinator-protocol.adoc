@@ -213,7 +213,7 @@ This call is retrieving the data of one or more existing entries.
 |op	|get
 |vid	|Vaccination ID to retrieve data from.
 
-Multiple VIDs may become requested by concatenating them using blank as divider character. The maximum allowed VIDs is 500 per request.
+Multiple VIDs can get submitted as array of VIDs or as a string with concatenated VIDs using blank as divider character. The allowed maximum of VIDs is 500 per request.
 
 |uid	|User identifier provided by the API user.
 |=======
@@ -263,7 +263,7 @@ This call is retrieving the data of one or more existing entries which have been
 |op	|getpublished
 |vid	a|Vaccination ID to retrieve data from.
 
-Multiple VIDs may become requested by concatenating them using blank as divider character. The maximum allowed VIDs is 500 per request.
+Multiple VIDs can get submitted as array of VIDs or as a string with concatenated VIDs using blank as divider character. The allowed maximum of VIDs is 500 per request.
 
 [CAUTION]
 Due to the nature of the publishing feature, this will only return data which was uploaded using the <<_publish, publish>> function. +
@@ -295,7 +295,7 @@ This call is deleting an existing entry.
 |op	|delete
 |vid	|Vaccination ID to delete from DataVaccinator Vault.
 
-Multiple VIDs may become requested by concatenating them using blank as divider character. The maximum allowed VIDs is 500 per request.
+Multiple VIDs can get submitted as array of VIDs or as a string with concatenated VIDs using blank as divider character. The allowed maximum of VIDs is 500 per request.
 
 |uid	|User identifier provided by the API user.
 |=======
@@ -346,7 +346,7 @@ You can verify this using the "check" function.
 
 |version	|2 (current protocol version)
 |op	|search
-|words	|One or more SearchHashes to search for. Multiple SearchHashes have to be divided by space.
+|words	|One or more SearchHashes to search for. Multiple SearchHashes can get submitted as array of SearchHashes or as a string with concatenated SearchHashes using blank as divider character.
 |uid	|User identifier provided by the API user.
 |=======
 
@@ -401,7 +401,10 @@ This chapter explains, what a service provider has to do to successfully handle 
 
 == Forward requests by adding service provider credentials
 
-In general, all requests have to become forwarded to the DataVaccinator Vault URL. The JSON encoded in _json_ data value must get enhanced by two additional values:
+In general, all requests have to become forwarded to the DataVaccinator Vault URL. If the requests are forwarded (eg from vaccinatorJSClass), the authentication has to become added. After processing you get the answer. You have to send back this answer to the calling end user client (eg web browser API).
+
+For authentication at the DataVaccinator Vault, these two values must be provided during your forward:
+
 [cols="1,4"]
 |=======
 |Field	|Description
@@ -410,7 +413,18 @@ In general, all requests have to become forwarded to the DataVaccinator Vault UR
 |spwd	|The service provider password. This is provided to the service provider by the vaccinator service staff.
 |=======
 
-Upon the JSON request was updated by sid and spwd, the request is forwarded to the DataVaccinator Vault URL (provided to you by the DataVaccinator staff). The returned result is sent as an answer to the calling end user client (eg web browser API).
+There are two options available for submitting the authentication:
+
+. The POST contains two additional form values _sid_ and _spw_.
+. The JSON encoded in _json_ data value is supplemented by two additional values _sid_ and _spw_.
+
+=== Option 1 with additional POST values (recommended)
+The POST already contains a _json_ key with the JSON encoded API call. You can add _sid_ and _spwd_ values to the form POST to add DataVaccinator Vault authentication.
+
+=== Option 2 with supplemented json
+The JSON encoded in _json_ data value must get supplemented by the two additional values.
+
+The drawback of this method is the need to decode, add the values and re-encode the json request. This is not needed for option 1.
 
 == Observe and enrich function calls
 

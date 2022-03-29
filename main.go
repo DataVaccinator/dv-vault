@@ -317,8 +317,13 @@ func protocolHandler(c echo.Context) error {
 // It returns an error in case of failure.
 // It returns nil in case of success.
 func checkCredentials(c echo.Context, clientRequest map[string]interface{}) error {
-	sid := GetInt(clientRequest["sid"], 0)
-	spwd := GetString(clientRequest["spwd"], "")
+	sid := GetInt(c.FormValue("sid"), 0)
+	spwd := GetString(c.FormValue("spwd"), "")
+	if spwd == "" || sid < 1 {
+		// json values fallback
+		sid = GetInt(clientRequest["sid"], 0)
+		spwd = GetString(clientRequest["spwd"], "")
+	}
 	if spwd == "" || sid < 1 {
 		return errors.New("Invalid credentials")
 	}

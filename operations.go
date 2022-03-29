@@ -119,8 +119,11 @@ func doDelete(c echo.Context, clientRequest map[string]interface{}) error {
 	uid := GetString(clientRequest["uid"], "")
 	sid := GetInt(clientRequest["sid"], 0)
 	vidList := GetString(clientRequest["vid"], "")
+	vids := GetStringArray(clientRequest["vid"], []string{})
 
-	vids := strings.SplitN(vidList, " ", -1)
+	if len(vids) == 0 {
+		vids = strings.SplitN(vidList, " ", -1)
+	}
 	if len(vids) < 1 {
 		return generateError(c, DV_MISSING_PARAM, "No VID?")
 	}
@@ -267,8 +270,11 @@ func doGet(c echo.Context, clientRequest map[string]interface{}, isPublish bool)
 	uid := GetString(clientRequest["uid"], "")
 	sid := GetInt(clientRequest["sid"], 0)
 	vidList := GetString(clientRequest["vid"], "")
+	vids := GetStringArray(clientRequest["vid"], []string{})
 
-	vids := strings.SplitN(vidList, " ", -1)
+	if len(vids) == 0 {
+		vids = strings.SplitN(vidList, " ", -1)
+	}
 	if len(vids) < 1 {
 		return generateError(c, DV_MISSING_PARAM, "No VID?")
 	}
@@ -353,8 +359,12 @@ func doGet(c echo.Context, clientRequest map[string]interface{}, isPublish bool)
 func doSearch(c echo.Context, clientRequest map[string]interface{}) error {
 	sid := GetInt(clientRequest["sid"], 0)
 	uid := GetString(clientRequest["uid"], "")
-	wds := GetString(clientRequest["words"], "")
-	words := strings.SplitN(wds, " ", -1)
+	words := GetStringArray(clientRequest["words"], []string{})
+
+	if len(words) == 0 {
+		wds := GetString(clientRequest["words"], "")
+		words = strings.SplitN(wds, " ", -1)
+	}
 
 	words = MakeUnique(words) // remove any duplicates
 
