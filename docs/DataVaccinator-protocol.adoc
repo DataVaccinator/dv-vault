@@ -26,7 +26,7 @@ The protocol is REST based and works by sending information using POST requests.
 The functionality at the service provider is established by some sort of intermediate handling between client and identity management (proxy).
 The described client protocol is used between the client implementation and the DataVaccinator Vault. The service provider always forwards all the requests to the DataVaccinator Vault and only adds his access information fields to the request (*sid* and *spwd*). The results are also forwarded back to the calling client then.
 
-A few functions like <<add_new_dataset, add>> also return data that is interesting for the service provider. He can use this to update his own database.
+A few functions like <<add-new-dataset, add>> also return data that is interesting for the service provider. He can use this to update his own database.
 
 The JSON encoded structure, containing the function name and all needed parameters, is typically sent in a POST field named _json_.
 A typical call consists of some operation code (_op_) and some field containing the encrypted data for the DataVaccinator Vault (_data_).
@@ -154,7 +154,7 @@ This call is adding a new dataset to the system (eg PID).
 
 |version	|2 (current protocol version)
 |op	|add
-|data	|Encrypted payload containing all the Vaccination Data to be stored (string blob, use base64 encoding for binary data). Please follow the encoding scheme described in <<implementation_details, Implementation Details>>.
+|data	|Encrypted payload containing all the Vaccination Data to be stored (string blob, use base64 encoding for binary data). Please follow the encoding scheme described in <<implementation-details, Implementation Details>>.
 |uid	|User identifier provided by the API user.
 |words	|Array of SearchHashes to add for <<search, search function>> (optional).
 |=======
@@ -198,7 +198,7 @@ Result:
 
 IMPORTANT: Updating payload data is critical to the local caches of the JS class. If multiple systems accessing the data, the cache of the other systems is outdated after some update. Only the system which did the changes is up to date. +
  +
-Therefore, this has to be handled special: Please create a unique code (eg time stamp or random number) in case you forward some <<update_dataset, update>> request to the DataVaccinator Vault. This code has to be sent to your client application as soon as possible (maybe as part of your protocol).
+Therefore, this has to be handled special: Please create a unique code (eg time stamp or random number) in case you forward some <<update-dataset, update>> request to the DataVaccinator Vault. This code has to be sent to your client application as soon as possible (maybe as part of your protocol).
 There, please call the *wipeCache()* function with this code every time.
 This will trigger the local cache to refresh in case something has changed.
 Please refer to the *wipeCache()* function description in JavaScript class documentation.
@@ -283,7 +283,7 @@ Result:
 |data	|This contains the Vaccination Data payload(s). Payload always comes as a object array where the VID is the key. It has one entry in case only one VID was requested and multiple entries in case of multiple results. Every given VID creates a return value, even if it was not found or suspicious. Note: The order is not guaranteed to be the same as provided in the request!
 |=======
 
-The returned result is identical to the one described for the <<retrieve_dataset, get>> function. Please look there for reference.
+The returned result is identical to the one described for the <<retrieve-dataset, get>> function. Please look there for reference.
 
 === Delete dataset
 
@@ -363,13 +363,13 @@ Result:
 
 === Publish
 
-This call is very similar to the <<add_new_dataset, add>> function. But while normal datasets can get only accessed by the originating service provider, published data can get accessed/retrieved by other service providers, too. For this, they only need to know the VID.
+This call is very similar to the <<add-new-dataset, add>> function. But while normal datasets can get only accessed by the originating service provider, published data can get accessed/retrieved by other service providers, too. For this, they only need to know the VID.
 
 NOTE: For security reasons, they also need valid access credentials (sid, spwd, allowed ip).
 
 While the data in DataVaccinator has to be always encrypted, the people who retrieve this data will need the correct password to decrypt. Please refer to the JavaScript class documentation for further details on this.
 
-The major differences to the <<add_new_dataset, add>> function are:
+The major differences to the <<add-new-dataset, add>> function are:
 
 . Payload data can not get updated (only deleted by the originator).
 . Publish does not support word search (no words accepted).
@@ -382,7 +382,7 @@ The major differences to the <<add_new_dataset, add>> function are:
 
 |version	|2 (current protocol version)
 |op	|publish
-|data	|Encrypted payload containing all the Vaccination Data to be stored (string blob, use base64 encoding for binary data). Please follow the encoding scheme described in <<implementation_details, Implementation Details>>.
+|data	|Encrypted payload containing all the Vaccination Data to be stored (string blob, use base64 encoding for binary data). Please follow the encoding scheme described in <<implementation-details, Implementation Details>>.
 |uid	|User identifier provided by the API user.
 |period	|The number of days after which this data is automatically deleted. Valid ranges are 1 to 365. Other values will trigger an error.
 |=======
@@ -433,9 +433,9 @@ In addition, the service provider has to observe the functions to provide additi
 
 === update call
 
-The <<update_dataset, update>> call will out date all other participants local caches. Therefore, they need to know about this. The only party able to tell them is you.
+The <<update-dataset, update>> call will out date all other participants local caches. Therefore, they need to know about this. The only party able to tell them is you.
 
-This is done by acting in case of a positive <<update_dataset, update>> call. In case the DataVaccinator Vault announces success, please generate a time stamp (or random token) and provide it to all affected clients. By knowing the VID from the request, you should be able to know the affected logins.
+This is done by acting in case of a positive <<update-dataset, update>> call. In case the DataVaccinator Vault announces success, please generate a time stamp (or random token) and provide it to all affected clients. By knowing the VID from the request, you should be able to know the affected logins.
 You send them this time stamp with their next request and they will have to call the *wipeCache()* class function with this as parameter. 
 
 If the API recognises this time stamp/token as already known, nothing will happen. If it does not know this value yet, it will wipe it's cache and regenerate it on demand later.
