@@ -42,19 +42,25 @@ An additional _code_ field contains the error number and the _desc_ field contai
 The _data_ field contains encrypted payload for the identity management. It is usually named Vaccination Data. It is encrypted due to contained recipe.
 A data field is expected to be string and encoded to a specific structure. For compatibility to older versions of the DataVaccinator JavaScript class, we have several versions of the _data_ field structure. Any new implementation should only use the most recent version and support older versions only if needed:
 
-Version 1:: `recipe:iv:payload` +
-There is no checksum used. +
-The payload is lowercase hex encoded.
+Version 1:: `recipe:cs:iv:encoding:payload`
+
+*Legacy encodings (do not use them for any uploads any more):*
 
 Version 2:: `recipe:cs:iv:payload` +
-The payload is lowercase hex encoded. 
+The payload is lowercase hex encoded. +
+_INFO: Currently in use for generic payload in the DataVaccinator JS library!_ +
 
-Version 3:: `recipe:cs:iv:encoding:payload`
+Version 3:: `recipe:iv:payload` +
+There is no checksum used. +
+The payload is lowercase hex encoded. +
+_INFO: Currently in use for publishing payload in the DataVaccinator JS library!_
+
+
 
 The parts have the following meaning:
 
 * The `recipe` defines the algorithm used for encryption. It is usually something like *aes-256-cbc*.
-* The `cs` value is the checksum of the used app-id key (last byte in hex, see app-id description).
+* The `cs` value is the checksum of the used app-id key (last byte in lowercase hex, see app-id description). If no app-id was used as key, for example in publishing, leave this part empty.
 * The `iv` is the start vector/nonce for encryption in lowercase hex encoding.
 * The `encoding` defines the encoding used in payload. Possible values are
 ** *b* → base64
