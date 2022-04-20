@@ -37,30 +37,34 @@ All calls will return a JSON encoded string, containing the result of the operat
 There is always a _status_ field returned. If it is not _OK_, something went wrong. In this case, the status is either _INVALID_ or _ERROR_.
 An additional _code_ field contains the error number and the _desc_ field contains additional information about the error (only if _status_ is not _OK_).
 
-=== Payload
+== Payload
 
-The _data_ field contains encrypted payload for the identity management. It is usually named Vaccination Data. It is encrypted due to contained recipe.
-A data field is expected to be string and encoded to a specific structure. For compatibility to older versions of the DataVaccinator JavaScript class, we have several versions of the _data_ field structure. Any new implementation should only use the most recent version and support older versions only if needed:
+The _data_ field contains encrypted payload for the identity management. It is usually named Vaccination Data. It is encrypted due to the contained recipe.
+A data field is expected to be string and encoded to a specific structure. For compatibility to older versions of the DataVaccinator JavaScript class, we have several versions of the _data_ field structure. Any new implementation should only use the current definition and support legacy versions only if needed for compatibility with existing data in DataVaccinator Vault:
 
-Version 1:: `recipe:cs:iv:encoding:payload`
+=== Payload encoding
+Currently, the data content is defined to be like this:
 
-*Legacy encodings (do not use them for any uploads any more):*
+`recipe:cs:iv:encoding:payload`
 
-Version 2:: `recipe:cs:iv:payload` +
+=== Legacy payload encodings
+Please do not use them for any uploads any more.
+
+Legacy Version a):: `recipe:cs:iv:payload` +
 The payload is lowercase hex encoded. +
 _INFO: Currently in use for generic payload in the DataVaccinator JS library!_ +
 
-Version 3:: `recipe:iv:payload` +
+Legacy Version b):: `recipe:iv:payload` +
 There is no checksum used. +
 The payload is lowercase hex encoded. +
 _INFO: Currently in use for publishing payload in the DataVaccinator JS library!_
 
 
-
+=== Parts definition
 The parts have the following meaning:
 
 * The `recipe` defines the algorithm used for encryption. It is usually something like *aes-256-cbc*.
-* The `cs` value is the checksum of the used app-id key (last byte in lowercase hex, see app-id description). If no app-id was used as key, for example in publishing, leave this part empty.
+* The `cs` value is the checksum of the used app-id key. It is the last two characters, see link:https://github.com/DataVaccinator/APP-ID/blob/master/docs/appid_manual/appid-manual.adoc#app-id[app-id description]. If no app-id was used as key, for example with the <<publish, publish>> function, leave this part empty.
 * The `iv` is the start vector/nonce for encryption in lowercase hex encoding.
 * The `encoding` defines the encoding used in payload. Possible values are
 ** *b* → base64
@@ -79,7 +83,7 @@ This is useful, for example, if the *changeAppId()* class failed during processi
 
 NOTE: The above chosen AES cipher recipe is just the reference implementation. You can also use others (like Twofish).
 
-=== Authentication
+== Authentication
 Currently, the DataVaccinator Vault supports a simple authentication schema. For this, every call needs to provide both ID and password (*sid* and *spwd*). In combination with IP whitelisting, this is already a good level of security.
 
 *Some additional thoughts about authentication*
