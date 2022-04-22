@@ -407,7 +407,7 @@ The major differences to the <<add-new-dataset, add>> function are:
 |op	|publish
 |data	|Encrypted payload containing all the Vaccination Data to be stored (string blob, use base64 encoding for binary data). Please follow the encoding scheme described in <<implementation-details, Implementation Details>>.
 |uid	|User identifier provided by the API user.
-|period	|The number of days after which this data is automatically deleted. Valid ranges are 1 to 365. Other values will trigger an error.
+|duration	|The number of days after which this data is automatically deleted. Valid ranges are 1 to 365. Other values will trigger an error.
 |=======
 
 [cols="1,4"]
