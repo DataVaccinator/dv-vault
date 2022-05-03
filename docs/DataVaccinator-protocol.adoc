@@ -373,6 +373,8 @@ You can verify this using the "check" function.
 |version	|2 (current protocol version)
 |op	|search
 |words	|One or more SearchHashes to search for. Multiple SearchHashes can get submitted as array of SearchHashes or as a string with concatenated SearchHashes using blank as divider character.
+
+Please note that the search is done using AND conjunction. Thus, providing multiple SearchHashes means that all of them have to match an entry. 
 |uid	|User identifier provided by the API user.
 |=======
 
