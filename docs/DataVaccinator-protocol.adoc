@@ -11,6 +11,8 @@ ifdef::env-github[]
 :warning-caption: :warning:
 endif::[]
 
+include::glossary_include.adoc[]
+
 == Client Protocol
 
 This chapter is describing the protocol for using the DataVaccinator Vault pseudonymisation service. This is the internal communication for the DataVaccinator Vault service and not to become implemented by customers developers.

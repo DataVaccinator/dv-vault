@@ -10,6 +10,8 @@ ifdef::env-github[]
 :warning-caption: :warning:
 endif::[]
 
+include::glossary_include.adoc[]
+
 == Foreword
 
 The data vaccinator enables developers to easily implement pseudonymisation into their own projects. The drawback of many pseudonymisation solutions is the missing search functionality. It is not possible to search for pseudonymized data inside DataVaccinator Vault by default, because the payloads are encrypted and encrypted data can not get searched for. By this, the use-cases would be very limited to projects where this is not mandatory.
@@ -100,7 +102,7 @@ This is a 32 character string because we always used the first two(!) characters
 
 == Searching
 
-For searching, the same algorithm applies for the word to search but without the security option. First, you calculate the SearchHash for the text you like to search. For *foo*  it is *cb582b* (with above example values and hash algorithm). You simply provide this to the DataVaccinator Vault service and it  will do a _like_ query to the database of SearchHashes like *cb582b%*, returning all VIDs that contain searchwords starting with this specific sequence.
+For searching, the same algorithm applies for the word to search but without the security option. First, you calculate the SearchHash for the text you like to search for. Looking for "foo" the *SearchHash* is `e38db3` (with above example values and hash algorithm). You simply provide this to the DataVaccinator Vault service and it  will do a _like_ query to the database of SearchHashes like `e38db3%`, returning all VIDs that contain searchwords starting with this specific sequence.
 
 == Security Considerations
 

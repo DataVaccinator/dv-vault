@@ -1,0 +1,36 @@
+== Glossary
+
+This section defines various terms used in DataVaccinator documentation.
+
+App-Id::
+The App-Id is a form of recoverable password based on someone's physical world identification, such as a passport or government ID card. Get more information at https://github.com/DataVaccinator/APP-ID/blob/master/docs/appid_manual/appid-manual.adoc
+
+DataVaccinator::
+This term describes the overall use of the DataVaccinator Vault, a potential Service Provider and a DataVaccinator Client in order to protect sensitive PID data via pseudonymisation.
+
+DataVaccinator Client::
+Software using this or another DataVaccinator client library to pseudonymise PID.
+
+DataVaccinator Vault::
+The service that stores your PID data. Get more information at https://www.datavaccinator.com
+
+SearchHash::
+This is a term that is used in a search to retrieve VID entries whose PID was indexed using index word entries. A search word must be the start of an index word to find the associated VID entry. The generation and description of SearchHashes is described in a separate link:https://github.com/DataVaccinator/dv-vault/blob/master/docs/Searchhash_Implementation.adoc[SearchHash documentation on GitHub].
+
+Index word::
+This is a term that is sent to the DataVaccinator Vault to index the associated PID data. It is a SearchHash enhanced by random data to protect against length predicting attacks in the DataVaccinator Vault. It is used to be found by a search word SearchHash using the search function of the DataVaccinator Vault protocol.
+
+Service Provider::
+The service provider is an optional party between the DataVaccinator Client and the DataVaccinator Vault. It receives all REST calls and forwards PID data to the DataVaccinator Vault and relays VID data back to the DataVaccinator Client. It may authenticate users and otherwise process VID data.
+
+PID::
+PID stands for Personal Identifiers. See https://en.wikipedia.org/wiki/Personal_identifier
+
+SID::
+The Service Provider identifier. It is used with the SPW by the DataVaccinator Vault to authenticate a Service Provider or a DataVaccinator Client.
+
+SPW or SPWD::
+The Service Provider password. It is used with the SID by the DataVaccinator Vault to authenticate a Service Provider or a DataVaccinator Client.
+
+VID::
+VID stands for Vaccination Identifier. It is an alias representing a piece of PID stored in the DataVaccinator Vault.
