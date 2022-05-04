@@ -39,17 +39,17 @@ All calls will return a JSON encoded string, containing the result of the operat
 There is always a _status_ field returned. If it is not _OK_, something went wrong. In this case, the status is either _INVALID_ or _ERROR_.
 An additional _code_ field contains the error number and the _desc_ field contains additional information about the error (only if _status_ is not _OK_).
 
-== Payload
+== Data
 
 The _data_ field contains encrypted payload for the identity management. It is usually named Vaccination Data. It is encrypted due to the contained recipe.
 A data field is expected to be string and encoded to a specific structure. For compatibility to older versions of the DataVaccinator JavaScript class, we have several versions of the _data_ field structure. Any new implementation should only use the current definition and support legacy versions only if needed for compatibility with existing data in DataVaccinator Vault:
 
-=== Payload encoding
-Currently, the data content is defined to be like this:
+=== Data encoding
+The _data_ field content is defined like this:
 
 `recipe:cs:iv:encoding:payload`
 
-=== Legacy payload encodings
+=== Legacy data encodings
 Please do not use them for any uploads any more.
 
 Legacy Version a):: `recipe:cs:iv:payload` +
@@ -63,7 +63,7 @@ _INFO: Currently in use for publishing payload in the DataVaccinator JS library!
 
 
 === Parts definition
-The parts have the following meaning:
+The _data_ field parts have the following meaning:
 
 * The `recipe` defines the algorithm used for encryption. It is usually something like *aes-256-cbc*.
 * The `cs` value is the checksum of the used app-id key. It is the last two characters, see link:https://github.com/DataVaccinator/APP-ID/blob/master/docs/appid_manual/appid-manual.adoc#app-id[app-id description]. If no app-id was used as key, for example with the <<publish, publish>> function, leave this part empty.
@@ -147,7 +147,7 @@ And the resulting example answer:
     "uid": "12345",
     "data": {
         "72f641db6bf18847a33a615501f3a571": {
-            "data": "aes-256-cbc:f7:29a1c8b68d8a:Z2Zkc2dmZG1rZyBmZ (...)
+            "data": "aes-256-cbc:f7:29a1c8b68d8a:b:Z2Zkc2dmZG1rZyBmZ (...)
                      XI0N2Z2IDZyNHkzMmY0Mw==",
             "status": "OK"
         }
@@ -179,7 +179,7 @@ This call is adding a new dataset to the system (eg PID).
 
 |version	|2 (current protocol version)
 |op	|add
-|data	|Encrypted payload containing all the Vaccination Data to be stored (string blob, use base64 encoding for binary data). Please follow the encoding scheme described in <<implementation-details, Implementation Details>>.
+|data	|Encoded data containing all the Vaccination Data to be stored (string blob, use base64 encoding for binary data). Please follow the data encoding scheme described in <<implementation-details, Implementation Details>>.
 |uid	|User identifier provided by the API user.
 |words	|Array of SearchHashes to add for <<search, search function>> (optional).
 |=======
@@ -206,7 +206,7 @@ This call is updating an existing entry.
 
 |version	|2 (current protocol version)
 |op	|update
-|data	|Encrypted payload containing all the Vaccination Data to get updated (string blob, use b64 encoding for binary data).
+|data	|Encoded data containing all the Vaccination Data to get updated (string blob, use b64 encoding for binary data).
 |vid	|Vaccination ID to update.
 |uid	|User identifier provided by the API user.
 |words	|Array of SearchHashes to add for search function (optional).
@@ -251,7 +251,7 @@ Result:
 
 |status	|Either OK, INVALID or ERROR. See generic description for details.
 |uid	|User identifier provided by the API user during call (only if it was provided).
-|data	|This contains the Vaccination Data payload(s). Payload always comes as a object array where the VID is the key. It has one entry in case only one VID was requested and multiple entries in case of multiple results. Every given VID creates a return value, even if it was not found or suspicious. Note: The order is not guaranteed to be the same as provided in the request!
+|data	|This contains the Vaccination data. Data comes as a object array where the VID is the key. It has one entry in case only one VID was requested and multiple entries in case of multiple results. Every given VID creates a return value, even if it was not found or suspicious. Note: The order is not guaranteed to be the same as provided in the request!
 |=======
 
 The returned result always confirms to this JSON schema, written as a complete example answer:
@@ -265,7 +265,7 @@ The returned result always confirms to this JSON schema, written as a complete e
    "data": {
      "f315db7b01721026308a5346ce3cb513": {
        "status": "OK",
-       "data": "aes-256-cbc:7f:29a1c8b68d8a:btewwyzox3i3fe4cg6a1qzi8pqoqa55orzf4bcxtjfcf5chep998sj6"
+       "data": "aes-256-cbc:7f:29a1c8b68d8a:b:btewwyzox3i3fe4cg6a1qzi8pqoqa55orzf4bcxtjfcf5chep998sj6"
      },
      "2ff18992cfc290d3d648aea5bdea38b1": {
        "status": "NOTFOUND",
@@ -305,7 +305,7 @@ Result:
 
 |status	|Either OK, INVALID or ERROR. See generic description for details.
 |uid	|User identifier provided by the API user during call (only if it was provided).
-|data	|This contains the Vaccination Data payload(s). Payload always comes as a object array where the VID is the key. It has one entry in case only one VID was requested and multiple entries in case of multiple results. Every given VID creates a return value, even if it was not found or suspicious. Note: The order is not guaranteed to be the same as provided in the request!
+|data	|This contains the Vaccination data. Data always comes as a object array where the VID is the key. It has one entry in case only one VID was requested and multiple entries in case of multiple results. Every given VID creates a return value, even if it was not found or suspicious. Note: The order is not guaranteed to be the same as provided in the request!
 |=======
 
 The returned result is identical to the one described for the <<retrieve-dataset, get>> function. Please look there for reference.
@@ -409,7 +409,7 @@ The major differences to the <<add-new-dataset, add>> function are:
 
 |version	|2 (current protocol version)
 |op	|publish
-|data	|Encrypted payload containing all the Vaccination Data to be stored (string blob, use base64 encoding for binary data). Please follow the encoding scheme described in <<implementation-details, Implementation Details>>.
+|data	|Encoded data containing all the Vaccination Data to be stored (string blob, use base64 encoding for binary data). Please follow the encoding scheme described in <<implementation-details, Implementation Details>>.
 |uid	|User identifier provided by the API user.
 |duration	|The number of days after which this data is automatically deleted. Valid ranges are 1 to 365. Other values will trigger an error.
 |=======
