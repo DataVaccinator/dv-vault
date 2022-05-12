@@ -48,15 +48,24 @@ func main() {
 		SERVER_VERSION = "0.0.1-devel"
 	}
 
+	loadConfig() // stores it in global configuration object
+
+	initDatabase() // assign global DB object here
+
+	if isManagement() {
+		shutdownDatabase() // close database handles
+		return
+	}
+
 	fmt.Println(" __                                 ")
 	fmt.Println("|  \\ _ |_ _ \\  /_  _ _. _  _ |_ _  _ ")
 	fmt.Println("|__/(_|| (_| \\/(_|(_(_|| )(_|| (_)|  ")
 	fmt.Println("")
 	fmt.Println("Starting DataVaccinator Vault server V" + SERVER_VERSION)
 
-	loadConfig() // stores it in global configuration object
-
-	initDatabase() // assign global DB object here
+	if cfg.DebugMode > 0 {
+		fmt.Printf("Cockroach DB (%v) connected (maxConnections: %v)\n", DBHost, DB.Stat().MaxConnections)
+	}
 
 	go cleanupHeartBeat() // start background task for DB cleanup
 
@@ -431,6 +440,7 @@ func cleanupDV() {
 	}
 
 	shutdownDatabase() // close database handles
+	fmt.Println("Database closed")
 	fmt.Println("DataVaccinator stopped regularily")
 }
 

@@ -22,11 +22,9 @@ import (
 )
 
 var DB *pgx.ConnPool
+var DBHost string
 
 func initDatabase() bool {
-
-	fmt.Print("Connect CockroachDB… ")
-
 	// Set client connection
 	var poolConfig pgx.ConnPoolConfig
 	config, err := pgx.ParseConnectionString(cfg.ConnectionString)
@@ -36,8 +34,6 @@ func initDatabase() bool {
 
 	poolConfig.ConnConfig = config
 	poolConfig.AcquireTimeout = time.Minute
-
-	fmt.Print(config.Host + " ")
 
 	maxConn := cfg.MaxConnections
 	if maxConn < 1 {
@@ -64,14 +60,15 @@ func initDatabase() bool {
 		panic("Test query to 'provider' table failed. Maybe no entries?")
 	}
 
-	fmt.Printf("(maxConnections: %v) Done\n", maxConn)
+	// keep DB host in global variable for later use (eg in main() function)
+	DBHost = config.Host
+
 	return true
 }
 
 // shutdownDatabase closes all database connections for clean shutdown
 func shutdownDatabase() {
 	DB.Close()
-	fmt.Println("Database closed")
 }
 
 // cleanupHeartBeat is called async to find and delete expired

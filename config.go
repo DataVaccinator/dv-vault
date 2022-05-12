@@ -2,7 +2,6 @@ package main
 
 import (
 	"encoding/json"
-	"fmt"
 	"os"
 )
 
@@ -23,7 +22,6 @@ type Configuration struct {
 var cfg Configuration
 
 func loadConfig() {
-	fmt.Print("Open config.json… ")
 	file, err := os.Open("config.json")
 	if err != nil {
 		panic("Missing config.json")
@@ -35,5 +33,4 @@ func loadConfig() {
 	if err != nil {
 		panic("Invalid config.json")
 	}
-	fmt.Println("Done")
 }

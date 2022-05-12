@@ -1,6 +1,7 @@
 package main
 
 import (
+	"bufio"
 	"crypto/rand"
 	"encoding/hex"
 	"encoding/json"
@@ -18,6 +19,7 @@ import (
 	"C"
 )
 import (
+	"log"
 	"net"
 	"os"
 )
@@ -90,6 +92,37 @@ func GetInt(clientRequest interface{}, asDefault int) (res int) {
 		res = int(resInt64)
 	default:
 		res, _ = strconv.Atoi(fmt.Sprintf("%v", clientRequest))
+	}
+	return
+}
+
+// GetBool casts an unknown interface to return as bool.
+// Use this to cast json results without triggering panic in
+// case the type does not match (eg received int instead of bool).
+func GetBool(clientRequest interface{}, asDefault bool) (res bool) {
+	if clientRequest == nil {
+		return asDefault
+	}
+	val := reflect.ValueOf(clientRequest)
+	switch clientRequest.(type) {
+	case int, int8, int16, int32, int64:
+		res = val.Int() != 0
+	case uint, uint8, uint16, uint32, uint64:
+		res = val.Uint() != 0
+	case float64:
+		res = int(clientRequest.(float64)) != 0
+	case float32:
+		res = int(clientRequest.(float32)) != 0
+	case string:
+		res, _ = strconv.ParseBool(clientRequest.(string))
+	case []byte:
+		res = false // not supported!
+	case json.Number:
+		var resInt64 int64
+		resInt64, _ = clientRequest.(json.Number).Int64()
+		res = int(resInt64) != 0
+	default:
+		res = clientRequest.(bool)
 	}
 	return
 }
@@ -317,4 +350,24 @@ func splitIPPort(listenIPPorts string) []IPPort {
 		}
 	}
 	return entries
+}
+
+func askForConfirmation(s string) bool {
+	reader := bufio.NewReader(os.Stdin)
+
+	for {
+		fmt.Printf("%s [y/n]: ", s)
+
+		response, err := reader.ReadString('\n')
+		if err != nil {
+			log.Fatal(err)
+		}
+
+		response = strings.ToLower(strings.TrimSpace(response))
+
+		if response == "y" || response == "yes" {
+			return true
+		}
+		return false
+	}
 }

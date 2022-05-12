@@ -1,0 +1,208 @@
+= vaccinator Commandline options
+:author: DataVaccinator Team
+:email: info@datavaccinator.com
+:toc:
+:doctype: book
+ifdef::env-github[]
+:tip-caption: :bulb:
+:note-caption: :information_source:
+:important-caption: :heavy_exclamation_mark:
+:caution-caption: :fire:
+:warning-caption: :warning:
+endif::[]
+
+include::glossary_include.adoc[]
+
+== Introduction in commandline usage
+
+The DataVaccinator Vault executable `vaccinator`, typically located at `/opt/vaccinator/`, is usually running the service. But it also accepts additional commandline parameters for management functionality beside the service function.
+
+As soon as you provide a commandline parameter, the executable will not establish a service and will not open ports. Instead, it will exit after the function was executed or an error occurs.
+
+Therefore, you can run the service (eg started by system.d) and then call the same executable with commandline parameters for management.
+
+NOTE: You very likely need to run the executable with sudo or as root.
+
+== Calling conventions and options
+
+[cols="1,3"]
+|=======
+|-j | JSON operation instructions.
+|-p | Pretty print any JSON results.
+|=======
+
+The `j` parameter contains the JSON to execute. There, the `op` parameter defines the desired operation for your call. 
+
+This is an example call for getting the list:
+
+[source, bash]
+----
+vaccinator -j='{"op":"list"}'
+----
+
+You get a pretty printed version of the result by adding the -p option:
+
+[source, bash]
+----
+vaccinator -p -j='{"op":"list"}'
+----
+
+== Management options
+
+=== List service providers
+
+[cols="1,3"]
+|=======
+|Option	| list
+|Description | List all service providers.
+|Returns | A JSON formatted array with status information and all available service providers and their configuration (except the password) in the data field.
+|Example a| This is some example output:
+
+[source, json]
+----
+{
+  "status": "OK",
+  "data": [
+    {
+      "created": "2021-07-16T14:43:56.083876+02:00",
+      "desc": "Just a test entry",
+      "ip": "127.0.0.1",
+      "name": "test",
+      "sid": 1
+    },
+    {
+      "created": "2022-05-10T13:40:47.157329+02:00",
+      "desc": "The first valid provider",
+      "ip": "192.168.1.10",
+      "name": "Company Division A",
+      "sid": 2
+    }
+  ]
+}
+----
+
+Please note that `sid` is the service provider id.
+|=======
+
+=== Add service provider
+
+[cols="1,3"]
+|=======
+|Option	| add
+|Description | Add a new service providers.
+|Values a| The following values may become provided:
+
+sid::
+The ID of the new service provider (mandatory).
+name::
+The name of the new service provider (mandatory).
+password::
+The password of the new service provider (mandatory).
+ip::
+The IP addresses this service provider may come from (mandatory). Divide multiple IP addresses using space character. You can enter IPv4 and IPv6 addresses.
+desc::
+Some description for the new service provider (optional).
+
+|Returns | A JSON formatted array with status information.
+
+|Example a|
+Call:
+[source, json]
+----
+{
+	"op": "add",
+	"sid": 2,
+	"name": "Some new provider",
+	"password": "superSecure",
+	"ip": "10.10.0.1 10.10.0.2 10.10.0.3"
+}
+----
+
+Result:
+[source, json]
+----
+{
+	"status": "SUCCESS"
+}
+----
+|=======
+
+=== Update service provider
+
+[cols="1,3"]
+|=======
+|Option	| update
+|Description | Update an existing service providers.
+|Values a| The following values may become provided:
+
+sid::
+The ID of the new service provider (mandatory).
+name::
+The name of the new service provider (optional).
+password::
+The password of the new service provider (optional).
+ip::
+The IP addresses this service provider may come from (optional). Divide multiple IP addresses using space character. You can enter IPv4 and IPv6 addresses.
+desc::
+Some description for the new service provider (optional).
+
+|Returns | A JSON formatted array with status information.
+
+|Example a|
+Call:
+[source, json]
+----
+{
+	"op": "update",
+	"sid": 2,
+	"name": "Some new provider name",
+    "description": "This is an updated one"
+}
+----
+
+Result:
+[source, json]
+----
+{
+	"status": "SUCCESS"
+}
+----
+|=======
+
+=== Remove service provider
+
+CAUTION: This option allows you to remove a service provider with all the data saved. To prevent accidential deletion, this function asks for confirmation on the command line by default. To prevent the confirmation prompt, set the force parameter (eg in automated environments).
+
+[cols="1,3"]
+|=======
+|Option	| remove
+|Description | Remove an existing service provider.
+|Values a| The following values may become provided:
+
+sid::
+The ID of the service provider to remove (mandatory).
+
+force::
+If set to `true` or `1`, it will not ask the security prompt on the commandline.
+
+|Returns | A JSON formatted array with status information.
+
+|Example a|
+Call:
+[source, json]
+----
+{
+	"op": "remove",
+	"sid": 2,
+    "force": true
+}
+----
+
+Result:
+[source, json]
+----
+{
+	"status": "SUCCESS"
+}
+----
+|=======
