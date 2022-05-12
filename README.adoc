@@ -36,7 +36,6 @@ Get more information, support and contact at <https://www.datavaccinator.com>.
 
 == What is missing:
 
-* There is currently no gui or any comandline options for managing service providers (add/edit/delete).
 * Currently no support for ARM systems.
 * No support for Windows systems.
 
@@ -56,17 +55,11 @@ In order to run a DataVaccinator Vault, please follow this guide for installatio
    `sudo systemctl start vaccinator`
 7. Control service start using +
    `journalctl -et vaccinator`
-8. Create/edit a service provider login
-   - Run CockroachDB console using +
-   `cockroach sql --insecure`
-   - Run +
-   `use vaccinator;` +
-   to make the vaccinator database the default.
-   - Run +
-   `select * from provider;` +
-   to get a list of the providers.
-9. Update the default entry with a password and allowed IPs like this (example): +
-   `UPDATE provider SET name='myName', password='myPassword', ip='192.168.1.10 127.0.0.1' WHERE providerid=1;`
+8. Update the default entry with a password and allowed IPs like this (example): +
+   - Run vaccinator executable +
+   `cd /opt/vaccinator/  +
+   ./vaccinator -p -j='{"op": "update", "sid": 1, "name": "1st provider", "password": "<myPassword>", "ip": "127.0.0.1"}'`
+   - Check the link:./docs/Commandline_Operations.adoc[docs/Commandline_Operations.adoc] for details about the configuration options.
 
 == License information
 DataVaccinator Vault is released as free software under the Affero GPL license (AGPL). You can redistribute it and/or modify it under the terms of this license which you can read by viewing the included LICENSE file or online at www.gnu.org/licenses/agpl.html
