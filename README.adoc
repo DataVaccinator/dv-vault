@@ -56,10 +56,9 @@ In order to run a DataVaccinator Vault, please follow this guide for installatio
 7. Control service start using +
    `journalctl -et vaccinator`
 8. Update the default entry with a password and allowed IPs like this (example): +
-   - Run vaccinator executable +
-   `cd /opt/vaccinator/  +
-   ./vaccinator -p -j='{"op": "update", "sid": 1, "name": "1st provider", "password": "<myPassword>", "ip": "127.0.0.1"}'`
-   - Check the link:./docs/Commandline_Operations.adoc[docs/Commandline_Operations.adoc] for details about the configuration options.
+   `cd /opt/vaccinator/`  +
+   `./vaccinator -p -j='{"op": "update", "sid": 1, "name": "1st provider", "password": "<myPassword>", "ip": "127.0.0.1"}'`
+   - Check the link:./docs/Commandline_Operations.adoc[docs/Commandline_Operations.adoc] for details about the available options and syntax.
 
 == License information
 DataVaccinator Vault is released as free software under the Affero GPL license (AGPL). You can redistribute it and/or modify it under the terms of this license which you can read by viewing the included LICENSE file or online at www.gnu.org/licenses/agpl.html
