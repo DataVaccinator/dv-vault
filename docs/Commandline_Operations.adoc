@@ -13,7 +13,7 @@ endif::[]
 
 include::glossary_include.adoc[]
 
-== Introduction in commandline usage
+== Introduction to commandline usage
 
 The DataVaccinator Vault executable `vaccinator`, typically located at `/opt/vaccinator/`, is usually running the service. But it also accepts additional commandline parameters for management functionality beside the service function.
 
@@ -53,7 +53,7 @@ vaccinator -p -j='{"op":"list"}'
 
 [cols="1,3"]
 |=======
-|Option	| list
+|Option  | list
 |Description | List all service providers.
 |Returns | A JSON formatted array with status information and all available service providers and their configuration (except the password) in the data field.
 |Example a| This is some example output:
@@ -88,7 +88,7 @@ Please note that `sid` is the service provider id.
 
 [cols="1,3"]
 |=======
-|Option	| add
+|Option  | add
 |Description | Add a new service providers.
 |Values a| The following values may become provided:
 
@@ -110,11 +110,11 @@ Call:
 [source, json]
 ----
 {
-	"op": "add",
-	"sid": 2,
-	"name": "Some new provider",
-	"password": "superSecure",
-	"ip": "10.10.0.1 10.10.0.2 10.10.0.3"
+  "op": "add",
+  "sid": 2,
+  "name": "Some new provider",
+  "password": "superSecure",
+  "ip": "10.10.0.1 10.10.0.2 10.10.0.3"
 }
 ----
 
@@ -122,7 +122,7 @@ Result:
 [source, json]
 ----
 {
-	"status": "SUCCESS"
+  "status": "SUCCESS"
 }
 ----
 |=======
@@ -131,7 +131,7 @@ Result:
 
 [cols="1,3"]
 |=======
-|Option	| update
+|Option  | update
 |Description | Update an existing service providers.
 |Values a| The following values may become provided:
 
@@ -153,10 +153,10 @@ Call:
 [source, json]
 ----
 {
-	"op": "update",
-	"sid": 2,
-	"name": "Some new provider name",
-    "description": "This is an updated one"
+  "op": "update",
+  "sid": 2,
+  "name": "Some new provider name",
+  "description": "This is an updated one"
 }
 ----
 
@@ -164,7 +164,7 @@ Result:
 [source, json]
 ----
 {
-	"status": "SUCCESS"
+  "status": "SUCCESS"
 }
 ----
 |=======
@@ -175,7 +175,7 @@ CAUTION: This option allows you to remove a service provider with all the data s
 
 [cols="1,3"]
 |=======
-|Option	| remove
+|Option  | remove
 |Description | Remove an existing service provider.
 |Values a| The following values may become provided:
 
@@ -192,9 +192,9 @@ Call:
 [source, json]
 ----
 {
-	"op": "remove",
-	"sid": 2,
-    "force": true
+  "op": "remove",
+  "sid": 2,
+  "force": true
 }
 ----
 
@@ -202,7 +202,7 @@ Result:
 [source, json]
 ----
 {
-	"status": "SUCCESS"
+  "status": "SUCCESS"
 }
 ----
 |=======
