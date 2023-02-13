@@ -55,8 +55,9 @@ func initDatabase() bool {
 
 	// Check the connection
 	var w int
-	row := DB.QueryRow("SELECT COUNT(*) FROM provider").Scan(&w)
-	if row != nil {
+	err = DB.QueryRow("SELECT COUNT(*) FROM provider").Scan(&w)
+	if err != nil {
+		fmt.Printf("\n%v\n", err)
 		panic("Test query to 'provider' table failed. Maybe no entries?")
 	}
 
