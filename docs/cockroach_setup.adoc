@@ -1,0 +1,82 @@
+= Cockroach setup
+:author: DataVaccinator Team
+:email: info@datavaccinator.com
+:toc:
+:doctype: book
+ifdef::env-github[]
+:tip-caption: :bulb:
+:note-caption: :information_source:
+:important-caption: :heavy_exclamation_mark:
+:caution-caption: :fire:
+:warning-caption: :warning:
+endif::[]
+
+include::glossary_include.adoc[]
+
+The following examples and calls are for CentOS (7, 8). You may need to adapt package names and pathes to run on other systems.
+
+== Download and setup
+
+The below also installs _tar_, _vim_, _zip_ and _bind-utils_ (dig) for later use.
+
+[source,shell]
+----
+yum install tar vim zip bind-utils
+curl https://binaries.cockroachdb.com/cockroach-v21.1.3.linux-amd64.tgz | tar -xz
+cp -i cockroach-v21.1.3.linux-amd64/cockroach /usr/local/bin/
+timedatectl set-timezone Europe/Berlin
+useradd cockroach
+chown cockroach /usr/local/bin/cockroach
+rm -rf cockroach-v21.1.3.linux-amd64/
+----
+
+NOTE: Get the most recent setup path from https://www.cockroachlabs.com/docs/stable/install-cockroachdb-linux.html.
+
+== Setup daemon (systemd)
+
+Create the following file: `/etc/systemd/system/cockroach.service`
+
+Put in the following content:
+
+[source]
+----
+[Unit]
+Description=Cockroach Database cluster node
+Requires=network.target
+
+[Service]
+Type=simple
+WorkingDirectory=/home/cockroach
+ExecStart=/usr/local/bin/cockroach start-single-node --listen-addr=10.0.0.10 --insecure
+ExecStop=/usr/local/bin/cockroach quit --insecure --host=10.0.0.10
+Restart=always
+RestartSec=10
+RestartPreventExitStatus=0
+StandardOutput=syslog
+StandardError=syslog
+SyslogIdentifier=cockroach
+User=cockroach
+
+[Install]
+WantedBy=default.target
+----
+
+You may need to adapt the IP 10.0.0.10 to match your IP. You can also use 127.0.0.1 if you only plan to access the database from this machine.
+
+In order to start the service, execute the following:
+
+[source,shell]
+----
+systemctl enable cockroach.service
+systemctl daemon-reexec
+systemctl start cockroach.service
+----
+
+Now check using `journalctl -et cockroach` if the service is up and running.
+
+Finally initialize the database:
+
+[source,shell]
+----
+cockroach init --insecure --host=10.0.0.10
+----
