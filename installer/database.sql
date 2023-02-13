@@ -1,9 +1,6 @@
 CREATE DATABASE IF NOT EXISTS vaccinator;
 USE vaccinator;
 
-CREATE USER IF NOT EXISTS <USER>;
-GRANT ALL ON DATABASE vaccinator TO <USER>;
-
 CREATE TABLE IF NOT EXISTS data (
   VID BYTES NOT NULL,
   PAYLOAD BYTES NOT NULL,
@@ -48,3 +45,6 @@ CREATE TABLE IF NOT EXISTS nodes (
 INSERT INTO provider (providerid, name, password, ip, creationdate) 
   VALUES(1, 'test', 'vaccinator', '127.0.0.1', now())
 ON CONFLICT DO NOTHING;
+
+CREATE USER IF NOT EXISTS <USER>;
+GRANT ALL ON TABLE vaccinator.* TO <USER> WITH GRANT OPTION;
