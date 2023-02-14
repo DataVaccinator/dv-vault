@@ -45,7 +45,7 @@ Get more information, support and contact at <https://www.datavaccinator.com>.
 == Get started
 In order to run a DataVaccinator Vault, please follow this guide for installation on a dedicated Linux machine:
 
-1. Install link:https://www.cockroachlabs.com/docs/releases/index.html[CockroachDB] on the machine.
+1. Install link:https://www.cockroachlabs.com/docs/releases/index.html[CockroachDB] on the machine link:docs/cockroach_setup.adoc[see our hints].
 2. Download the latest DataVaccinator setup (...setup.sh) from link:https://github.com/Kukulkano/dv-vault/releases/tag/release[GitHub releases page] to some temporary directory on your machine.
 3. Run it like this: +
    `sudo sh dv-vault-1.0.0_x86_64_setup.sh`
