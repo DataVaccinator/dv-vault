@@ -128,6 +128,7 @@ func main() {
 		e.Use(middleware.CORSWithConfig(middleware.CORSConfig{
 			AllowOrigins: domains,
 			AllowMethods: []string{http.MethodGet, http.MethodPut, http.MethodPost},
+			MaxAge:       600,
 		}))
 		fmt.Printf("NOTE: Enabled CORS domains for \"%v\"\n", cfg.CORSDomains)
 	}
